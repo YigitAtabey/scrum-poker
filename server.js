@@ -57,7 +57,7 @@ io.on("connection", (socket) => {
 
     // Aynı isimleri benzersizleştir
     const existingNames = new Set(Object.values(rooms[roomId].users).map(u => u.name));
-    let finalName = name, i = 2;
+    let finalName = name, i = 1;
     while (existingNames.has(finalName)) finalName = `${name}-${i++}`;
 
     rooms[roomId].users[socket.id] = { id: socket.id, name: finalName };
@@ -187,6 +187,31 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("state", roomState(roomId));
     io.to(roomId).emit("history", rooms[roomId].history || []);
     if (typeof ack === "function") ack({ ok:true });
+  });
+
+  socket.on("leave", () => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    
+    // Kullanıcıyı odadan çıkar
+    delete rooms[roomId].users[socket.id];
+    delete rooms[roomId].votes[socket.id];
+    
+    // Odadan ayrıl
+    socket.leave(roomId);
+    socket.data.roomId = null;
+    
+    // Oda boşsa sil
+    const empty = Object.keys(rooms[roomId].users).length === 0;
+    if (empty) {
+      delete rooms[roomId];
+    } else {
+      // Diğer kullanıcılara güncel durumu gönder
+      io.to(roomId).emit("state", roomState(roomId));
+    }
+    
+    // Çıkan kullanıcıya onay gönder
+    socket.emit("left", { ok: true });
   });
 
   socket.on("disconnect", () => {

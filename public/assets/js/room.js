@@ -34,6 +34,17 @@
 
   revealBtn.addEventListener("click", () => RT.reveal());
   resetBtn.addEventListener("click", () => RT.reset());
+  
+  // Odadan çık butonu
+  const leaveBtn = document.getElementById("leaveBtn");
+  if (leaveBtn) {
+    leaveBtn.addEventListener("click", () => {
+      if (confirm("Odadan çıkmak istediğinizden emin misiniz?")) {
+        RT.leave();
+      }
+    });
+  }
+  
   if (taskSaveBtn) {
     taskSaveBtn.addEventListener("click", () => RT.setTask(taskInput.value));
   }

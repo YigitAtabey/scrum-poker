@@ -100,6 +100,13 @@ window.RT = {
         showMsg(res?.reason || "Görev kaydedilemedi.", "error");
       }
     });
+  },
+  leave() {
+    if (ROOM_ID) {
+      socket.emit("leave");
+      // Ana sayfaya yönlendir
+      window.location.href = "index.html";
+    }
   }
 };
 
