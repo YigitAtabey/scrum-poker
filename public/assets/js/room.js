@@ -17,7 +17,7 @@
     const btn = document.createElement("button");
     btn.className = "card";
     btn.textContent = v;
-    btn.setAttribute("data-value", v);
+    btn.setAttribute("data-value", v);  
 
     // Fare ile
     btn.addEventListener("click", () => RT.vote(v));
