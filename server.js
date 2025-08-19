@@ -1,0 +1,186 @@
+// server.js
+const express = require("express");
+const app = express();
+const http = require("http").createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(http, { cors: { origin: "*" } });
+
+app.use(express.static("public"));
+
+/**
+ * rooms = {
+ *   [roomId]: {
+ *     revealed: false,
+ *     currentTask: string,
+ *     history: Array<{ task: string, votes: Record<string,string>, stats: object, revealedAt: number }>,
+ *     users: { [socketId]: { id, name } },
+ *     votes: { [socketId]: "card" }
+ *   }
+ * }
+ */
+const rooms = {};
+
+function roomState(roomId, revealedOnly=false) {
+  const r = rooms[roomId] || { revealed:false, currentTask:"", history:[], users:{}, votes:{} };
+  const usersArr = Object.values(r.users); // [{id,name}, ...]
+  return {
+    roomId,
+    revealed: r.revealed,
+    currentTask: r.currentTask || "",
+    history: r.history || [],
+    users: usersArr,
+    votes: r.revealed ? r.votes : {}, // reveal olmadan kimseye oyları göstermeyiz
+    voted: Object.keys(r.votes)
+  };
+}
+
+io.on("connection", (socket) => {
+  socket.data.roomId = null;
+
+  socket.on("join", ({ roomId, name }) => {
+    if (!roomId || !name) return;
+
+    if (!rooms[roomId]) rooms[roomId] = { revealed:false, currentTask:"", history:[], users:{}, votes:{} };
+
+    // Aynı isimleri benzersizleştir
+    const existingNames = new Set(Object.values(rooms[roomId].users).map(u => u.name));
+    let finalName = name, i = 2;
+    while (existingNames.has(finalName)) finalName = `${name}-${i++}`;
+
+    rooms[roomId].users[socket.id] = { id: socket.id, name: finalName };
+    socket.join(roomId);
+    socket.data.roomId = roomId;
+
+    // Kendi görünen adını gönder
+    socket.emit("me", { id: socket.id, name: finalName });
+
+    // Oda durumunu herkese yayınla
+    io.to(roomId).emit("state", roomState(roomId));
+    // Ayrı bir history yayını da yap (istemciler direkt listeyi güncellesin)
+    io.to(roomId).emit("history", rooms[roomId].history || []);
+  });
+
+  socket.on("vote", (card, ack) => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    // Reveal edilmiş turda oy kabul etmeyelim
+    if (rooms[roomId].revealed) {
+      if (typeof ack === "function") ack({ ok:false, reason: "Reveal sonrası oy alınmaz." });
+      return;
+    }
+
+    const deck = ["0","½","1","2","3","5","8","13","21","?","☕"];
+    if (!deck.includes(card)) {
+      if (typeof ack === "function") ack({ ok:false, reason: "Geçersiz kart." });
+      return;
+    }
+
+    rooms[roomId].votes[socket.id] = card;
+
+    // Reveal olmadan oyları yayınlamıyoruz; sadece state (count) yenilensin diye
+    io.to(roomId).emit("state", roomState(roomId));
+    if (typeof ack === "function") ack({ ok:true });
+  });
+
+  // İstemci mevcut odayı tekrar istemek istediğinde
+  socket.on("getState", () => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    socket.emit("state", roomState(roomId));
+    socket.emit("history", rooms[roomId].history || []);
+  });
+
+  socket.on("setTask", (task, ack) => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    const t = String(task || "").trim();
+    // Reveal sonrası görev değiştirilmesin
+    if (rooms[roomId].revealed) {
+      if (typeof ack === "function") ack({ ok:false, reason: "Reveal sonrası görev değiştirilemez." });
+      return;
+    }
+    rooms[roomId].currentTask = t;
+    io.to(roomId).emit("state", roomState(roomId));
+    io.to(roomId).emit("history", rooms[roomId].history || []);
+    if (typeof ack === "function") ack({ ok:true, task: t });
+  });
+
+  function calcStatsFromVotes(votes) {
+    const map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+    const nums = Object.values(votes)
+      .map((v) => map[v])
+      .filter((v) => typeof v === "number");
+    if (nums.length === 0) {
+      return { count: 0, distribution: {}, average: null, median: null, mode: null, summary: "Geçerli oy yok." };
+    }
+    nums.sort((a,b) => a-b);
+    const sum = nums.reduce((a,b)=>a+b,0);
+    const average = sum / nums.length;
+    const mid = Math.floor(nums.length/2);
+    const median = nums.length % 2 ? nums[mid] : (nums[mid-1] + nums[mid]) / 2;
+    const freq = {};
+    nums.forEach(n => { freq[n] = (freq[n]||0)+1; });
+    const maxF = Math.max(...Object.values(freq));
+    const mode = Object.keys(freq).filter(k => Number(freq[k]) === maxF).map(Number);
+    const dist = {};
+    Object.values(votes).forEach(v => { dist[v] = (dist[v]||0)+1; });
+    const summary = `Dağılım: ${Object.entries(dist).map(([k,c])=>`${k}:${c}`).join("  ")}` +
+      `\nOrtalama: ${average.toFixed(2)} | Medyan: ${median} | Mod: ${mode.join(", ")}`;
+    return { count: nums.length, distribution: dist, average, median, mode, summary };
+  }
+
+  socket.on("reveal", (ack) => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    // Görev adı boşsa reveal'ı engelle (scrum mantığı: görev + oy)
+    const taskName = (rooms[roomId].currentTask || "").trim();
+    if (!taskName) {
+      if (typeof ack === "function") ack({ ok:false, reason: "Önce görev adını kaydetmelisin." });
+      return;
+    }
+    // En az bir oy şartı
+    const hasAnyVote = Object.keys(rooms[roomId].votes || {}).length > 0;
+    if (!hasAnyVote) {
+      if (typeof ack === "function") ack({ ok:false, reason: "Reveal için en az bir oy gerekli." });
+      return;
+    }
+    rooms[roomId].revealed = true;
+    // Tarihçeye ekle
+    const snapshotVotes = { ...rooms[roomId].votes };
+    const stats = calcStatsFromVotes(snapshotVotes);
+    rooms[roomId].history = rooms[roomId].history || [];
+    rooms[roomId].history.unshift({
+      task: taskName,
+      votes: snapshotVotes,
+      stats,
+      revealedAt: Date.now()
+    });
+    io.to(roomId).emit("state", roomState(roomId));
+    io.to(roomId).emit("history", rooms[roomId].history || []);
+    if (typeof ack === "function") ack({ ok:true });
+  });
+
+  socket.on("reset", (ack) => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    rooms[roomId].revealed = false;
+    rooms[roomId].votes = {};
+    io.to(roomId).emit("state", roomState(roomId));
+    io.to(roomId).emit("history", rooms[roomId].history || []);
+    if (typeof ack === "function") ack({ ok:true });
+  });
+
+  socket.on("disconnect", () => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    delete rooms[roomId].users[socket.id];
+    delete rooms[roomId].votes[socket.id];
+    const empty = Object.keys(rooms[roomId].users).length === 0;
+    if (empty) delete rooms[roomId];
+    else io.to(roomId).emit("state", roomState(roomId));
+  });
+});
+
+http.listen(3000, () => {
+  console.log("Server çalışıyor: http://localhost:3000");
+});

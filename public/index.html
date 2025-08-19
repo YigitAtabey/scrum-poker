@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scrum Poker</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+</head>
+<body>
+  <h1>Scrum Poker</h1>
+
+  <!-- Uyarı/ bilgi mesajları -->
+  <div id="alerts" aria-live="polite"></div>
+
+  <!-- Odaya giriş / oluşturma formu -->
+  <form id="joinForm">
+    <input type="text" id="username" placeholder="Kullanıcı adın" required />
+    <input type="text" id="room" placeholder="Oda kodu (boş bırak = yeni oda)" />
+    <button type="submit">Katıl</button>
+  </form>
+
+  <h3>Son Katıldığın Odalar</h3>
+  <ul id="recentRooms"></ul>
+
+  <!-- Scriptler -->
+  <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

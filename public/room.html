@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scrum Poker - Oda</title>
+  <link rel="stylesheet" href="assets/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/css/main.css" />
+  
+
+</head>
+<body>
+  <header class="topbar">
+    <div><strong>Oda:</strong> <span id="roomId">-</span></div>
+    <div>
+      <span id="status" class="badge" role="status" aria-live="polite">Beklemede</span>
+      <button id="revealBtn" class="btn btn-primary oguz-btn">Reveal</button>
+      <button id="resetBtn" class="btn btn-outline-secondary">Reset</button>
+
+    </div>
+  </header>
+
+  <div id="alerts" aria-live="polite"></div>
+
+  <div class="layout">
+    <section>
+      <h3>Katılımcılar</h3>
+      <ul id="userList" class="users"></ul>
+    </section>
+
+    <section>
+      <h3>Desteden Seç</h3>
+      <div id="deck" class="deck"></div>
+
+      <h3>Görev</h3>
+      <div class="task">
+        <input id="taskInput" type="text" placeholder="Görev adı (örn: US-123: Login sayfası)" />
+        <button id="taskSaveBtn" class="btn btn-outline">Kaydet</button>
+      </div>
+
+      <h3>Özet İstatistikler</h3>
+      <p id="voteCount" class="muted"></p>
+      <p id="stats" class="muted">Reveal’dan sonra görünecek.</p>
+    </section>
+
+    <section>
+      <h3>Geçmiş</h3>
+      <ul id="history" class="history"></ul>
+    </section>
+  </div>
+
+  <!-- Socket.io client explicitly from CDN to avoid Live Server path issues -->
+  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.8.1/dist/socket.io.min.js"></script>
+  <script src="assets/js/realtime.js" defer></script>
+  <script src="assets/js/room.js" defer></script>
+  <script src="assets/bootstrap/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
