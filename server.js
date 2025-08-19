@@ -23,15 +23,28 @@ const rooms = {};
 function roomState(roomId, revealedOnly=false) {
   const r = rooms[roomId] || { revealed:false, currentTask:"", history:[], users:{}, votes:{} };
   const usersArr = Object.values(r.users); // [{id,name}, ...]
-  return {
+  
+  const state = {
     roomId,
     revealed: r.revealed,
     currentTask: r.currentTask || "",
     history: r.history || [],
     users: usersArr,
     votes: r.revealed ? r.votes : {}, // reveal olmadan kimseye oyları göstermeyiz
-    voted: Object.keys(r.votes)
+    voted: Object.keys(r.votes), // Bu her zaman doğru oy sayısını verir
+    voteCount: Object.keys(r.votes).length // Bu her zaman doğru oy sayısını verir
   };
+  
+  // Debug için console.log ekle
+  console.log(`Room ${roomId} State:`, {
+    revealed: r.revealed,
+    currentTask: r.currentTask,
+    votes: r.votes,
+    voted: Object.keys(r.votes),
+    voteCount: Object.keys(r.votes).length
+  });
+  
+  return state;
 }
 
 io.on("connection", (socket) => {
@@ -76,6 +89,8 @@ io.on("connection", (socket) => {
     }
 
     rooms[roomId].votes[socket.id] = card;
+    console.log(`Vote received: ${card} from ${socket.id} in room ${roomId}. Total votes: ${Object.keys(rooms[roomId].votes).length}`);
+    console.log(`Room ${roomId} votes after vote:`, rooms[roomId].votes);
 
     // Reveal olmadan oyları yayınlamıyoruz; sadece state (count) yenilensin diye
     io.to(roomId).emit("state", roomState(roomId));
@@ -100,6 +115,7 @@ io.on("connection", (socket) => {
       return;
     }
     rooms[roomId].currentTask = t;
+    console.log(`Task set: "${t}" in room ${roomId}`);
     io.to(roomId).emit("state", roomState(roomId));
     io.to(roomId).emit("history", rooms[roomId].history || []);
     if (typeof ack === "function") ack({ ok:true, task: t });
@@ -135,15 +151,18 @@ io.on("connection", (socket) => {
     // Görev adı boşsa reveal'ı engelle (scrum mantığı: görev + oy)
     const taskName = (rooms[roomId].currentTask || "").trim();
     if (!taskName) {
+      console.log(`Reveal blocked: No task name in room ${roomId}`);
       if (typeof ack === "function") ack({ ok:false, reason: "Önce görev adını kaydetmelisin." });
       return;
     }
     // En az bir oy şartı
     const hasAnyVote = Object.keys(rooms[roomId].votes || {}).length > 0;
     if (!hasAnyVote) {
+      console.log(`Reveal blocked: No votes in room ${roomId}. Votes:`, rooms[roomId].votes);
       if (typeof ack === "function") ack({ ok:false, reason: "Reveal için en az bir oy gerekli." });
       return;
     }
+    console.log(`Reveal successful in room ${roomId}. Task: "${taskName}", Votes:`, rooms[roomId].votes);
     rooms[roomId].revealed = true;
     // Tarihçeye ekle
     const snapshotVotes = { ...rooms[roomId].votes };
@@ -181,6 +200,6 @@ io.on("connection", (socket) => {
   });
 });
 
-http.listen(3000, () => {
-  console.log("Server çalışıyor: http://localhost:3000");
+http.listen(3001, () => {
+  console.log("Server çalışıyor: http://localhost:3001");
 });

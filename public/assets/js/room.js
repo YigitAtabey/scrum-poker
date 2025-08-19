@@ -128,6 +128,21 @@ Ortalama: ${avg.toFixed(2)} | Medyan: ${median} | Mod: ${mode}`;
       const hasTask = (state.currentTask || "").trim().length > 0;
       const hasAnyVote = votedCount > 0;
       const canReveal = hasTask && !state.revealed && hasAnyVote;
+      
+      // Debug için console.log ekle
+      console.log("Reveal Button Debug:", {
+        hasTask,
+        hasAnyVote,
+        votedCount,
+        currentTask: state.currentTask,
+        revealed: state.revealed,
+        votes: state.votes,
+        voted: state.voted,
+        voteCount: state.voteCount,
+        "state.voted.length": state.voted ? state.voted.length : "undefined",
+        "state.voteCount": state.voteCount
+      });
+      
       revealBtn.disabled = !canReveal;
       revealBtn.title = canReveal ? "Reveal" : "Önce görev ve en az bir oy gerekli.";
     }

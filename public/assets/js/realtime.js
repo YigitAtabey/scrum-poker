@@ -1,7 +1,7 @@
 // realtime.js — Socket.io istemci katmanı (RT burada)
 const SOCKET_URL =
   (location.hostname === "localhost" || location.hostname === "127.0.0.1")
-    ? "http://localhost:3000"
+    ? "http://localhost:3001"
     : window.location.origin; // deploy'da aynı origin
 
 const socket = io(SOCKET_URL, { transports: ["websocket", "polling"] });
@@ -51,8 +51,15 @@ window.RT = {
   vote(card) {
     this.myVote = card;        // reveal öncesi highlight için
     socket.emit("vote", card, (res) => {
-      // Başarılı oy için mesaj göstermiyoruz (spam'ı önlemek için)
-      if (!res || res.ok) return;
+      if (res && res.ok) {
+        // Oy başarıyla gönderildi, state'i güncelle
+        if (!RT.state) RT.state = {};
+        // UI'yi tetikle
+        try { window.dispatchEvent(new CustomEvent("rt:state", { detail: RT.state })); } catch {}
+        // Sunucudan taze state iste
+        socket.emit("getState");
+        return;
+      }
       showMsg(res.reason || "Oy gönderilemedi.", "error");
     });
   },
