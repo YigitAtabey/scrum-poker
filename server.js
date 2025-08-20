@@ -140,8 +140,18 @@ io.on("connection", (socket) => {
     const mode = Object.keys(freq).filter(k => Number(freq[k]) === maxF).map(Number);
     const dist = {};
     Object.values(votes).forEach(v => { dist[v] = (dist[v]||0)+1; });
-    const summary = `Dağılım: ${Object.entries(dist).map(([k,c])=>`${k}:${c}`).join("  ")}` +
-      `\nOrtalama: ${average.toFixed(2)} | Medyan: ${median} | Mod: ${mode.join(", ")}`;
+    
+    // Dağılımı daha anlaşılır hale getir
+    const distText = Object.entries(dist).map(([k,c]) => {
+      if (k === "☕") return `${c} kişi mola istedi`;
+      if (k === "?") return `${c} kişi belirsiz`;
+      if (k === "½") return `${c} kişi 0.5 puan`;
+      return `${c} kişi ${k} puan`;
+    }).join("\n");
+    
+    const summary = `${distText}
+
+📊 Özet: Ortalama ${average.toFixed(1)} | Medyan ${median} | En çok ${mode.join(", ")}`;
     return { count: nums.length, distribution: dist, average, median, mode, summary };
   }
 

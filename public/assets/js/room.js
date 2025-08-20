@@ -19,39 +19,63 @@
     btn.textContent = v;
     btn.setAttribute("data-value", v);  
 
-    // Fare ile
-    btn.addEventListener("click", () => RT.vote(v));
+      // Fare ile
+  btn.addEventListener("click", () => {
+    if (window.RT && window.RT.vote) {
+      window.RT.vote(v);
+    }
+  });
 
-    // Klavye erişilebilirlik
-    btn.setAttribute("tabindex", "0");
-    btn.setAttribute("aria-label", `Kart ${v}`);
-    btn.addEventListener("keypress", (e) => {
-      if (e.key === "Enter" || e.key === " ") RT.vote(v);
-    });
+  // Klavye erişilebilirlik
+  btn.setAttribute("tabindex", "0");
+  btn.setAttribute("aria-label", `Kart ${v}`);
+  btn.addEventListener("keypress", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      if (window.RT && window.RT.vote) {
+        window.RT.vote(v);
+      }
+    }
+  });
 
     deckEl.appendChild(btn);
   });
 
-  revealBtn.addEventListener("click", () => RT.reveal());
-  resetBtn.addEventListener("click", () => RT.reset());
+  revealBtn.addEventListener("click", () => {
+    if (window.RT && window.RT.reveal) {
+      window.RT.reveal();
+    }
+  });
+  resetBtn.addEventListener("click", () => {
+    if (window.RT && window.RT.reset) {
+      window.RT.reset();
+    }
+  });
   
   // Odadan çık butonu
   const leaveBtn = document.getElementById("leaveBtn");
   if (leaveBtn) {
     leaveBtn.addEventListener("click", () => {
       if (confirm("Odadan çıkmak istediğinizden emin misiniz?")) {
-        RT.leave();
+        if (window.RT && window.RT.leave) {
+          window.RT.leave();
+        }
       }
     });
   }
   
   if (taskSaveBtn) {
-    taskSaveBtn.addEventListener("click", () => RT.setTask(taskInput.value));
+    taskSaveBtn.addEventListener("click", () => {
+      if (window.RT && window.RT.setTask) {
+        window.RT.setTask(taskInput.value);
+      }
+    });
   }
   if (taskInput) {
     taskInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
-        RT.setTask(taskInput.value);
+        if (window.RT && window.RT.setTask) {
+          window.RT.setTask(taskInput.value);
+        }
       }
     });
   }
@@ -75,10 +99,18 @@
 
     const dist = {};
     Object.values(votes).forEach(v => dist[v]=(dist[v]||0)+1);
-    const distText = Object.entries(dist).map(([k,c])=>`${k}:${c}`).join("  ");
+    
+    // Dağılımı daha anlaşılır hale getir
+    const distText = Object.entries(dist).map(([k,c]) => {
+      if (k === "☕") return `${c} kişi mola istedi`;
+      if (k === "?") return `${c} kişi belirsiz`;
+      if (k === "½") return `${c} kişi 0.5 puan`;
+      return `${c} kişi ${k} puan`;
+    }).join("\n");
 
-    return `Dağılım: ${distText}
-Ortalama: ${avg.toFixed(2)} | Medyan: ${median} | Mod: ${mode}`;
+    return `${distText}
+
+📊 Özet: Ortalama ${avg.toFixed(1)} | Medyan ${median} | En çok ${mode}`;
   }
 
   // UI'yi güncelle
@@ -108,7 +140,7 @@ Ortalama: ${avg.toFixed(2)} | Medyan: ${median} | Mod: ${mode}`;
     voteCountEl.setAttribute("aria-live","polite");
 
     // Kartlarda kendi seçimimizi vurgula ve akışa göre enable/disable et
-    const myVote = state.revealed ? (state.votes[RT.me.id] || null) : (RT.myVote || null);
+    const myVote = state.revealed ? (state.votes[window.RT?.me?.id] || null) : (window.RT?.myVote || null);
     const disableDeck = state.revealed;
     [...deckEl.querySelectorAll(".card")].forEach(btn => {
       const sel = btn.dataset.value === myVote;
@@ -183,7 +215,7 @@ Ortalama: ${avg.toFixed(2)} | Medyan: ${median} | Mod: ${mode}`;
   if (window.RT && window.RT.state) {
     try { window.renderRoom(window.RT.state); } catch (e) {}
     // İlk anda history'yi de talep et
-    try { RT.getState && RT.getState(); } catch (e) {}
+    try { window.RT.getState && window.RT.getState(); } catch (e) {}
   }
 
   // Realtime katmanından gelen özel olayı da dinle (yarış durumlarına karşı)
