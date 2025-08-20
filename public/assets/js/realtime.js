@@ -50,10 +50,25 @@ window.RT = {
   },
   vote(card) {
     this.myVote = card;        // reveal öncesi highlight için
+    
+    // Mevcut görev yazısını KESİNLİKLE koru
+    const currentTaskInput = document.getElementById('taskInput');
+    const currentTaskValue = currentTaskInput ? currentTaskInput.value : '';
+    
     socket.emit("vote", card, (res) => {
       if (res && res.ok) {
         // Oy başarıyla gönderildi, state'i güncelle
         if (!RT.state) RT.state = {};
+        
+        // Görev yazısını KESİNLİKLE geri yükle - daha uzun gecikme ile
+        setTimeout(() => {
+          if (currentTaskInput && currentTaskValue) {
+            if (currentTaskInput.value !== currentTaskValue) {
+              currentTaskInput.value = currentTaskValue;
+            }
+          }
+        }, 200);
+        
         // UI'yi tetikle
         try { window.dispatchEvent(new CustomEvent("rt:state", { detail: RT.state })); } catch {}
         // Sunucudan taze state iste
@@ -75,7 +90,17 @@ window.RT = {
   reset() {
     this.myVote = null;
     socket.emit("reset", (res) => {
-      if (res && res.ok) showMsg("Yeni tura geçildi.", "info");
+      if (res && res.ok) {
+        showMsg("Yeni tura geçildi.", "info");
+        // Reset sonrası yerel state'i de temizle
+        if (this.state) {
+          this.state.currentTask = '';
+          this.state.votes = {};
+          this.state.voted = [];
+          this.state.voteCount = 0;
+          this.state.revealed = false;
+        }
+      }
     });
     // Reset sonrası kartları tekrar aktif hale getirmek için güncel state iste
     socket.emit("getState");
@@ -91,6 +116,18 @@ window.RT = {
         if (!RT.state) RT.state = {};
         RT.state.currentTask = res.task || t;
         RT.state.taskUndoDepth = typeof res.depth === "number" ? res.depth : (RT.state.taskUndoDepth || 0);
+        
+        // Eğer daha önce oy verilmişse, o oyu tekrar aktif et
+        if (RT.myVote) {
+          // Oy verildi olarak işaretle
+          RT.state.votes[RT.me.id] = RT.myVote;
+          if (!RT.state.voted) RT.state.voted = [];
+          if (!RT.state.voted.includes(RT.me.id)) {
+            RT.state.voted.push(RT.me.id);
+          }
+          RT.state.voteCount = RT.state.voted.length;
+        }
+        
         // UI'yi tetikle
         try { window.dispatchEvent(new CustomEvent("rt:state", { detail: RT.state })); } catch {}
         showMsg("Görev kaydedildi.", "info");

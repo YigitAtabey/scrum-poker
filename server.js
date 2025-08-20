@@ -105,6 +105,12 @@ io.on("connection", (socket) => {
     socket.emit("history", rooms[roomId].history || []);
   });
 
+  // İstatistikleri getir
+  socket.on("getStats", (ack) => {
+    const stats = getGlobalStats();
+    if (typeof ack === "function") ack(stats);
+  });
+
   socket.on("setTask", (task, ack) => {
     const roomId = socket.data.roomId;
     if (!roomId || !rooms[roomId]) return;
@@ -121,22 +127,55 @@ io.on("connection", (socket) => {
     if (typeof ack === "function") ack({ ok:true, task: t });
   });
 
-  function calcStatsFromVotes(votes) {
-    const map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
-    const nums = Object.values(votes)
-      .map((v) => map[v])
-      .filter((v) => typeof v === "number");
-    if (nums.length === 0) {
-      return { count: 0, distribution: {}, average: null, median: null, mode: null, summary: "Geçerli oy yok." };
-    }
-    nums.sort((a,b) => a-b);
-    const sum = nums.reduce((a,b)=>a+b,0);
-    const average = sum / nums.length;
-    const mid = Math.floor(nums.length/2);
-    const median = nums.length % 2 ? nums[mid] : (nums[mid-1] + nums[mid]) / 2;
-    const freq = {};
-    nums.forEach(n => { freq[n] = (freq[n]||0)+1; });
-    const maxF = Math.max(...Object.values(freq));
+  // Global istatistikleri hesapla
+function getGlobalStats() {
+  const totalRooms = Object.keys(rooms).length;
+  let totalUsers = 0;
+  let totalVotes = 0;
+  let allVotes = [];
+  
+  // Tüm odalardaki kullanıcıları ve oyları topla
+  Object.values(rooms).forEach(room => {
+    totalUsers += Object.keys(room.users || {}).length;
+    const roomVotes = Object.values(room.votes || {});
+    totalVotes += roomVotes.length;
+    allVotes.push(...roomVotes);
+  });
+  
+  // Ortalama puanı hesapla
+  const voteMap = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+  const numericVotes = allVotes
+    .map(v => voteMap[v])
+    .filter(v => typeof v === "number");
+  
+  const avgPoints = numericVotes.length > 0 
+    ? (numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length).toFixed(1)
+    : "0.0";
+  
+  return {
+    totalRooms,
+    activeUsers: totalUsers,
+    totalVotes,
+    avgPoints: avgPoints
+  };
+}
+
+function calcStatsFromVotes(votes) {
+  const map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+  const nums = Object.values(votes)
+    .map((v) => map[v])
+    .filter((v) => typeof v === "number");
+  if (nums.length === 0) {
+    return { count: 0, distribution: {}, average: null, median: null, mode: null, summary: "Geçerli oy yok." };
+  }
+  nums.sort((a,b) => a-b);
+  const sum = nums.reduce((a,b)=>a+b,0);
+  const average = sum / nums.length;
+  const mid = Math.floor(nums.length/2);
+  const median = nums.length % 2 ? nums[mid] : (nums[mid-1] + nums[mid]) / 2;
+  const freq = {};
+  nums.forEach(n => { freq[n] = (freq[n]||0)+1; });
+  const maxF = Math.max(...Object.values(freq));
     const mode = Object.keys(freq).filter(k => Number(freq[k]) === maxF).map(Number);
     const dist = {};
     Object.values(votes).forEach(v => { dist[v] = (dist[v]||0)+1; });
@@ -194,8 +233,12 @@ io.on("connection", (socket) => {
     if (!roomId || !rooms[roomId]) return;
     rooms[roomId].revealed = false;
     rooms[roomId].votes = {};
+    rooms[roomId].currentTask = ''; // Aktif görevi de sıfırla
+    rooms[roomId].voted = []; // Oy veren listesini de sıfırla
+    rooms[roomId].voteCount = 0; // Oy sayacını da sıfırla
     io.to(roomId).emit("state", roomState(roomId));
     io.to(roomId).emit("history", rooms[roomId].history || []);
+    console.log(`Reset successful in room ${roomId}. Task and votes cleared.`);
     if (typeof ack === "function") ack({ ok:true });
   });
 

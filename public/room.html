@@ -33,10 +33,16 @@
       <div id="deck" class="deck"></div>
 
       <h3>Görev</h3>
-      <div class="task">
+      <div class="task-input-container">
         <input id="taskInput" type="text" placeholder="Görev adı (örn: US-123: Login sayfası)" />
         <button id="taskSaveBtn" class="btn btn-outline">Kaydet</button>
       </div>
+      
+      <div id="currentTaskDisplay" class="task" style="display: none;">
+                 <span class="task-label">Aktif Görev:</span>
+         <h3 id="currentTaskText"></h3>
+         <small class="task-change-hint">Aktif görevi butona basarak değiştirebilirsiniz</small>
+       </div>
 
       <h3>Özet İstatistikler</h3>
       <p id="voteCount" class="muted"></p>

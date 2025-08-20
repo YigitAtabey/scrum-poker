@@ -20,12 +20,71 @@
   <!-- Odaya giriş / oluşturma formu -->
   <form id="joinForm">
     <input type="text" id="username" placeholder="Kullanıcı adın" required />
-    <input type="text" id="room" placeholder="Oda kodu (boş bırak = yeni oda)" />
+    <input type="text" id="room" placeholder="Oda kodu (boş bırakırsan rastgele bir kod ile yeni oda oluşturulur)" />
     <button type="submit">Katıl</button>
   </form>
 
   <h3>Son Katıldığın Odalar</h3>
   <ul id="recentRooms"></ul>
+
+  <!-- Alt Kısım - İstatistikler ve Özellikler -->
+  <div class="bottom-section">
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-icon">🏠</div>
+        <div class="stat-number" id="totalRooms">-</div>
+        <div class="stat-label">Toplam Oda</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-number" id="activeUsers">-</div>
+        <div class="stat-label">Aktif Kullanıcı</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-number" id="totalVotes">-</div>
+        <div class="stat-label">Toplam Oy</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-number" id="avgPoints">-</div>
+        <div class="stat-label">Ortalama Puan</div>
+      </div>
+    </div>
+
+    <div class="features-container">
+      <div class="feature-item">
+        <div class="feature-icon">🚀</div>
+        <h3>Hızlı Başlangıç</h3>
+        <p>Kullanıcı adını gir, oda kodunu yaz (veya boş bırak), hemen başla!</p>
+      </div>
+      
+      <div class="feature-item">
+        <div class="feature-icon">🎴</div>
+        <h3>Fibonacci Kartlar</h3>
+        <p>0, ½, 1, 2, 3, 5, 8, 13, 21, ?, ☕ - Standart Scrum Poker kartları</p>
+      </div>
+      
+      <div class="feature-item">
+        <div class="feature-icon">📊</div>
+        <h3>Gerçek Zamanlı</h3>
+        <p>Anlık oylama, canlı sonuçlar ve takım senkronizasyonu</p>
+      </div>
+    </div>
+
+    <div class="recent-activity">
+      <h3>🎬 Son Aktiviteler</h3>
+      <div class="activity-list" id="recentActivity">
+        <div class="activity-item">
+          <span class="activity-time">Şimdi</span>
+          <span class="activity-text">Yeni oda oluşturuldu</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Scriptler -->
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.8.1/dist/socket.io.min.js"></script>
