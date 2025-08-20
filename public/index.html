@@ -76,12 +76,28 @@
     </div>
 
     <div class="recent-activity">
-      <h3>🎬 Son Aktiviteler</h3>
+      <div class="activity-header">
+        <h3>🎬 Son Aktiviteler</h3>
+        <button class="btn-refresh" onclick="updateRecentActivity()" title="Aktiviteleri yenile">
+          🔄
+        </button>
+      </div>
       <div class="activity-list" id="recentActivity">
         <div class="activity-item">
-          <span class="activity-time">Şimdi</span>
-          <span class="activity-text">Yeni oda oluşturuldu</span>
+          <span class="activity-time">⏳</span>
+          <span class="activity-text">Aktiviteler yükleniyor...</span>
         </div>
+      </div>
+      
+      <!-- Bağlantı durumu ve yeniden deneme -->
+      <div class="connection-status" id="connectionStatus" style="display: none;">
+        <div class="status-item">
+          <span class="status-icon">🔗</span>
+          <span class="status-text">Bağlantı durumu kontrol ediliyor...</span>
+        </div>
+        <button class="btn-retry" onclick="retryConnection()" style="display: none;">
+          🔄 Yeniden Dene
+        </button>
       </div>
     </div>
   </div>

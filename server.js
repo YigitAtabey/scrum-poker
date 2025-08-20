@@ -71,6 +71,20 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("state", roomState(roomId));
     // Ayrı bir history yayını da yap (istemciler direkt listeyi güncellesin)
     io.to(roomId).emit("history", rooms[roomId].history || []);
+    
+    // Yeni kullanıcı katıldı aktivitesi ekle
+    if (!rooms[roomId].activities) rooms[roomId].activities = [];
+    rooms[roomId].activities.unshift({
+      type: 'join',
+      text: `${finalName} odaya katıldı`,
+      timestamp: Date.now(),
+      user: finalName
+    });
+    
+    // Sadece son 10 aktiviteyi tut
+    if (rooms[roomId].activities.length > 10) {
+      rooms[roomId].activities = rooms[roomId].activities.slice(0, 10);
+    }
   });
 
   socket.on("vote", (card, ack) => {
@@ -111,6 +125,12 @@ io.on("connection", (socket) => {
     if (typeof ack === "function") ack(stats);
   });
 
+  // Son aktiviteleri getir
+  socket.on("getRecentActivities", (ack) => {
+    const activities = getRecentActivities();
+    if (typeof ack === "function") ack(activities);
+  });
+
   socket.on("setTask", (task, ack) => {
     const roomId = socket.data.roomId;
     if (!roomId || !rooms[roomId]) return;
@@ -122,6 +142,21 @@ io.on("connection", (socket) => {
     }
     rooms[roomId].currentTask = t;
     console.log(`Task set: "${t}" in room ${roomId}`);
+    
+    // Görev ayarlandı aktivitesi ekle
+    if (!rooms[roomId].activities) rooms[roomId].activities = [];
+    rooms[roomId].activities.unshift({
+      type: 'task',
+      text: `"${t}" görevi ayarlandı`,
+      timestamp: Date.now(),
+      task: t
+    });
+    
+    // Sadece son 10 aktiviteyi tut
+    if (rooms[roomId].activities.length > 10) {
+      rooms[roomId].activities = rooms[roomId].activities.slice(0, 10);
+    }
+    
     io.to(roomId).emit("state", roomState(roomId));
     io.to(roomId).emit("history", rooms[roomId].history || []);
     if (typeof ack === "function") ack({ ok:true, task: t });
@@ -158,6 +193,79 @@ function getGlobalStats() {
     totalVotes,
     avgPoints: avgPoints
   };
+}
+
+// Son aktiviteleri getir
+function getRecentActivities() {
+  const activities = [];
+  const now = Date.now();
+  
+  // Tüm odalardaki son aktiviteleri topla
+  Object.entries(rooms).forEach(([roomId, room]) => {
+    // Son reveal aktiviteleri
+    if (room.history && room.history.length > 0) {
+      room.history.forEach((item, index) => {
+        const timeDiff = now - item.revealedAt;
+        const minutes = Math.floor(timeDiff / (1000 * 60));
+        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+        
+        let timeText;
+        if (minutes < 1) timeText = "Şimdi";
+        else if (minutes < 60) timeText = `${minutes} dk önce`;
+        else if (hours < 24) timeText = `${hours} saat önce`;
+        else timeText = `${Math.floor(hours / 24)} gün önce`;
+        
+        activities.push({
+          time: timeText,
+          text: `"${item.task}" görevi için oylama tamamlandı`,
+          roomId: roomId,
+          timestamp: item.revealedAt,
+          type: 'reveal'
+        });
+      });
+    }
+    
+    // Oda aktiviteleri (kullanıcı katılımı, görev ayarlama)
+    if (room.activities && room.activities.length > 0) {
+      room.activities.forEach((activity) => {
+        const timeDiff = now - activity.timestamp;
+        const minutes = Math.floor(timeDiff / (1000 * 60));
+        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+        
+        let timeText;
+        if (minutes < 1) timeText = "Şimdi";
+        else if (minutes < 60) timeText = `${minutes} dk önce`;
+        else if (hours < 24) timeText = `${hours} saat önce`;
+        else timeText = `${Math.floor(hours / 24)} gün önce`;
+        
+        activities.push({
+          time: timeText,
+          text: activity.text,
+          roomId: roomId,
+          timestamp: activity.timestamp,
+          type: activity.type
+        });
+      });
+    }
+    
+    // Aktif kullanıcı sayısı (sadece aktif odalar için)
+    const userCount = Object.keys(room.users || {}).length;
+    if (userCount > 0) {
+      activities.push({
+        time: "Şimdi",
+        text: `${roomId} odasında ${userCount} kullanıcı aktif`,
+        roomId: roomId,
+        timestamp: now,
+        type: 'active'
+      });
+    }
+  });
+  
+  // Zaman damrasına göre sırala (en yeni önce)
+  activities.sort((a, b) => b.timestamp - a.timestamp);
+  
+  // En son 8 aktiviteyi döndür
+  return activities.slice(0, 8);
 }
 
 function calcStatsFromVotes(votes) {
@@ -265,11 +373,44 @@ function calcStatsFromVotes(votes) {
     
     // Çıkan kullanıcıya onay gönder
     socket.emit("left", { ok: true });
+    
+    // Kullanıcı çıktı aktivitesi ekle
+    if (rooms[roomId] && rooms[roomId].activities) {
+      const userName = rooms[roomId].users[socket.id]?.name || 'Bilinmeyen kullanıcı';
+      rooms[roomId].activities.unshift({
+        type: 'leave',
+        text: `${userName} odadan ayrıldı`,
+        timestamp: Date.now(),
+        user: userName
+      });
+      
+      // Sadece son 10 aktiviteyi tut
+      if (rooms[roomId].activities.length > 10) {
+        rooms[roomId].activities = rooms[roomId].activities.slice(0, 10);
+      }
+    }
   });
 
   socket.on("disconnect", () => {
     const roomId = socket.data.roomId;
     if (!roomId || !rooms[roomId]) return;
+    
+    // Kullanıcı çıktı aktivitesi ekle
+    if (rooms[roomId].activities) {
+      const userName = rooms[roomId].users[socket.id]?.name || 'Bilinmeyen kullanıcı';
+      rooms[roomId].activities.unshift({
+        type: 'disconnect',
+        text: `${userName} bağlantısı kesildi`,
+        timestamp: Date.now(),
+        user: userName
+      });
+      
+      // Sadece son 10 aktiviteyi tut
+      if (rooms[roomId].activities.length > 10) {
+        rooms[roomId].activities = rooms[roomId].activities.slice(0, 10);
+      }
+    }
+    
     delete rooms[roomId].users[socket.id];
     delete rooms[roomId].votes[socket.id];
     const empty = Object.keys(rooms[roomId].users).length === 0;
@@ -279,5 +420,7 @@ function calcStatsFromVotes(votes) {
 });
 
 http.listen(3001, () => {
-  console.log("Server çalışıyor: http://localhost:3001");
+  console.log("🚀 Server çalışıyor: http://localhost:3001");
+  console.log("📡 Socket.IO aktif ve bağlantıları kabul ediyor");
+  console.log("🎯 Aktiviteler ve istatistikler canlı olarak takip ediliyor");
 });
