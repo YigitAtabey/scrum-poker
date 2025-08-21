@@ -68,8 +68,8 @@ window.addEventListener("DOMContentLoaded", () => {
   // Son aktiviteleri güncelle
   updateRecentActivity();
   
-  // İstatistikleri her 30 saniyede bir güncelle
-  setInterval(updateStats, 30000);
+  // İstatistikleri her 5 saniyede bir güncelle
+  setInterval(updateStats, 5000);
   
   // Aktiviteleri her 15 saniyede bir güncelle
   setInterval(updateRecentActivity, 15000);

@@ -91,7 +91,6 @@ a:hover {
 /* Tüm elementlerde altı çizili olmasını engelle - genel kural */
 * {
     text-decoration: none !important;
-    border-bottom: none !important;
 }
 
 /* Sadece gerekli yerlerde altı çizili olsun */
