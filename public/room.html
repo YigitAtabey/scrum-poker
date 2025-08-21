@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Scrum Poker - Oda</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="assets/css/main.css" />
   
@@ -32,17 +35,54 @@
       <h3>Desteden Seç</h3>
       <div id="deck" class="deck"></div>
 
-      <h3>Görev</h3>
-      <div class="task-input-container">
-        <input id="taskInput" type="text" placeholder="Görev adı (örn: US-123: Login sayfası)" />
-        <button id="taskSaveBtn" class="btn btn-outline">Kaydet</button>
+      <div class="task-section">
+        <div class="task-header">
+          <div class="task-icon">📋</div>
+          <h3>Görev</h3>
+          <div class="task-divider"></div>
+        </div>
+        
+        <!-- Görev giriş alanı -->
+        <div class="task-input-container" id="taskInputContainer">
+          <div class="task-input-wrapper">
+            <div class="input-icon">✏️</div>
+            <input 
+              id="taskInput" 
+              type="text" 
+              placeholder="Görev adını yazın... (örn: US-123: Login sayfası tasarımı)" 
+              class="task-input-field"
+            />
+            <button id="taskSaveBtn" class="task-save-btn">
+              <span class="btn-icon">💾</span>
+              <span class="btn-text">Kaydet</span>
+            </button>
+          </div>
+          <div class="task-input-hint">
+            <span class="hint-icon">💡</span>
+            Görev adına tıklayarak pop-up ile düzenleyebilirsiniz
+          </div>
+        </div>
+        
+        <!-- Aktif görev gösterimi -->
+        <div id="currentTaskDisplay" class="current-task-display" style="display: none;">
+          <div class="current-task-header">
+            <span class="current-task-label">🎯 AKTİF GÖREV</span>
+            <div class="task-status-badge">Aktif</div>
+          </div>
+          <div class="current-task-content">
+            <h3 id="currentTaskText" class="current-task-text"></h3>
+            <div class="task-actions">
+              <small class="task-change-hint">
+                <span class="hint-icon">✏️</span>
+                Görev adına tıklayarak düzenleyebilirsiniz
+              </small>
+            </div>
+          </div>
+        </div>
       </div>
-      
-      <div id="currentTaskDisplay" class="task" style="display: none;">
-                 <span class="task-label">Aktif Görev:</span>
-         <h3 id="currentTaskText"></h3>
-         <small class="task-change-hint">Aktif görevi butona basarak değiştirebilirsiniz</small>
-       </div>
+
+      <!-- Hazır butonu için özel alan -->
+      <div id="readyButtonContainer" class="ready-button-container"></div>
 
       <h3>Özet İstatistikler</h3>
       <p id="voteCount" class="muted"></p>
@@ -55,6 +95,9 @@
     </section>
   </div>
 
+  <!-- Sweet Alert CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
   <!-- Socket.io client from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.8.1/dist/socket.io.min.js"></script>
   <script src="assets/js/realtime.js"></script>

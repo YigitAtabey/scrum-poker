@@ -1,8 +1,10 @@
 // realtime.js — Socket.io istemci katmanı (RT burada)
-const SOCKET_URL =
-  (location.hostname === "localhost" || location.hostname === "127.0.0.1")
-    ? "http://localhost:3001"
-    : window.location.origin; // deploy'da aynı origin
+// Localhost kontrolü - hem localhost hem de 127.0.0.1'i kontrol et
+const isLocal = location.hostname === "localhost" || 
+                location.hostname === "127.0.0.1" || 
+                location.hostname.includes("127.0.0.1");
+
+const SOCKET_URL = isLocal ? "http://localhost:3001" : window.location.origin;
 
 const socket = io(SOCKET_URL, { transports: ["websocket", "polling"] });
 
@@ -197,10 +199,25 @@ socket.on("state", (incoming) => {
     users: usersArray,
     votes: incoming.votes || {},
     voted: Array.isArray(incoming.voted) ? incoming.voted : Object.keys(incoming.votes || {}),
-    voteCount: typeof incoming.voteCount === "number" ? incoming.voteCount : Object.keys(incoming.votes || {}).length
+    voteCount: typeof incoming.voteCount === "number" ? incoming.voteCount : Object.keys(incoming.votes || {}).length,
+    owner: incoming.owner || null // Oda sahibi bilgisi
   };
 
   RT.state = state;
+  
+  // Oda sahibi kontrolü
+  if (RT.me && state.owner) {
+    const isOwner = RT.me.id === state.owner;
+    // Global değişkeni güncelle
+    if (typeof window.isRoomOwner !== 'undefined') {
+      window.isRoomOwner = isOwner;
+    }
+    // Custom event ile oda sahibi bilgisini yayınla
+    try {
+      window.dispatchEvent(new CustomEvent("rt:owner", { detail: { isOwner, ownerId: state.owner } }));
+    } catch {}
+  }
+  
   // UI'yi çiz
   if (typeof window.renderRoom === "function") {
     window.renderRoom(state);

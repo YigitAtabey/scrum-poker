@@ -45,6 +45,9 @@ function setupFormSubmit() {
       room = Math.random().toString(36).substring(2, 8);
     }
 
+    // Oda kodunu case-insensitive yap (küçük harfe çevir)
+    room = room.toLowerCase();
+
     // LocalStorage'a kullanıcı adını kaydet
     localStorage.setItem("username", username);
 
@@ -150,7 +153,15 @@ function initSocket() {
   }
   
   console.log("Yeni Socket.IO bağlantısı kuruluyor...");
-  globalSocket = io(window.location.origin, {
+  // Localhost kontrolü - hem localhost hem de 127.0.0.1'i kontrol et
+  const isLocal = location.hostname === "localhost" || 
+                  location.hostname === "127.0.0.1" || 
+                  location.hostname.includes("127.0.0.1");
+  
+  const socketUrl = isLocal ? "http://localhost:3001" : window.location.origin;
+  console.log("Socket.IO bağlantı URL'i:", socketUrl);
+  
+  globalSocket = io(socketUrl, {
     timeout: 20000, // 20 saniye timeout
     reconnection: true,
     reconnectionAttempts: 5,
