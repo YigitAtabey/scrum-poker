@@ -419,8 +419,9 @@ function calcStatsFromVotes(votes) {
   });
 });
 
-http.listen(3001, () => {
-  console.log("🚀 Server çalışıyor: http://localhost:3001");
+const PORT = process.env.PORT || 3001;
+http.listen(PORT, () => {
+  console.log(`🚀 Server çalışıyor: http://localhost:${PORT}`);
   console.log("📡 Socket.IO aktif ve bağlantıları kabul ediyor");
   console.log("🎯 Aktiviteler ve istatistikler canlı olarak takip ediliyor");
 });

@@ -94,7 +94,7 @@ function initSocket() {
   }
   
   console.log("Yeni Socket.IO bağlantısı kuruluyor...");
-  globalSocket = io("http://localhost:3001", {
+  globalSocket = io(window.location.origin, {
     timeout: 20000, // 20 saniye timeout
     reconnection: true,
     reconnectionAttempts: 5,
