@@ -151,6 +151,12 @@
       return;
     }
     
+    // Görev aktif değilse kart seçimine izin verme
+    if (window.RT && window.RT.state && (!window.RT.state.currentTask || !window.RT.state.currentTask.trim())) {
+      showInfoMessage("Önce görev adını ayarlamalısınız.");
+      return;
+    }
+    
     // Önceki seçimi temizle
     document.querySelectorAll('.card').forEach(card => {
       card.classList.remove('selected');
@@ -181,7 +187,7 @@
       } else {
         // Fallback: Görev bilgisinin altına ekle
         const currentTaskDisplay = document.getElementById('currentTaskDisplay');
-        if (currentTaskDisplay && currentTaskDisplay.nextElementSibling) {
+        if (currentTaskDisplay && currentTaskDisplay.nextSibling) {
           currentTaskDisplay.parentNode.insertBefore(readyBtn, currentTaskDisplay.nextSibling);
         }
       }
@@ -190,15 +196,22 @@
       readyBtn.addEventListener('click', toggleReady);
     }
     
+    // Görev aktif değilse butonu devre dışı bırak
+    const hasActiveTask = window.RT && window.RT.state && window.RT.state.currentTask && window.RT.state.currentTask.trim();
+    
     // Buton metnini ve durumunu güncelle
     if (isReady && readyVote !== null) {
       readyBtn.textContent = '✓ Hazır (İptal Et)';
       readyBtn.className = 'btn btn-warning';
       readyBtn.disabled = false;
-    } else if (selectedCard) {
+    } else if (selectedCard && hasActiveTask) {
       readyBtn.textContent = `${selectedCard} ile Hazır`;
       readyBtn.className = 'btn btn-success';
       readyBtn.disabled = false;
+    } else if (selectedCard && !hasActiveTask) {
+      readyBtn.textContent = 'Görev Bekleniyor...';
+      readyBtn.className = 'btn btn-secondary';
+      readyBtn.disabled = true;
     } else {
       readyBtn.textContent = 'Önce Kart Seç';
       readyBtn.className = 'btn btn-secondary';
@@ -224,6 +237,12 @@
       
       showSuccessMessage('Hazır durumu iptal edildi. Yeni kart seçebilirsiniz.');
     } else if (selectedCard) {
+      // Görev aktif değilse hazır olmaya izin verme
+      if (window.RT && window.RT.state && (!window.RT.state.currentTask || !window.RT.state.currentTask.trim())) {
+        showInfoMessage("Önce görev adını ayarlamalısınız.");
+        return;
+      }
+      
       // Hazır ol - oy ver
       isReady = true;
       readyVote = selectedCard;

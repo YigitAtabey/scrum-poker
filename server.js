@@ -278,6 +278,14 @@ io.on("connection", (socket) => {
   socket.on("vote", (card, ack) => {
     const roomId = socket.data.roomId;
     if (!roomId || !rooms[roomId]) return;
+    
+    // Görev aktif değilse oy kabul etmeyelim
+    const taskName = (rooms[roomId].currentTask || "").trim();
+    if (!taskName) {
+      if (typeof ack === "function") ack({ ok:false, reason: "Önce görev adını ayarlamalısınız." });
+      return;
+    }
+    
     // Reveal edilmiş turda oy kabul etmeyelim
     if (rooms[roomId].revealed) {
       if (typeof ack === "function") ack({ ok:false, reason: "Reveal sonrası oy alınmaz." });
