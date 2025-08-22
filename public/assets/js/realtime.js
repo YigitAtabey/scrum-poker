@@ -6,7 +6,13 @@ const isLocal = location.hostname === "localhost" ||
 
 const SOCKET_URL = isLocal ? "http://localhost:3001" : window.location.origin;
 
-const socket = io(SOCKET_URL, { transports: ["websocket", "polling"] });
+const socket = io(SOCKET_URL, { 
+  transports: ["websocket", "polling"],
+  upgrade: true,
+  rememberUpgrade: true,
+  timeout: 20000,
+  forceNew: true
+});
 
 function getQuery(key) {
   const url = new URL(window.location.href);

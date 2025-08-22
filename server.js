@@ -3,7 +3,14 @@ const express = require("express");
 const app = express();
 const http = require("http").createServer(app);
 const { Server } = require("socket.io");
-const io = new Server(http, { cors: { origin: "*" } });
+const io = new Server(http, { 
+  cors: { 
+    origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  transports: ["websocket", "polling"]
+});
 
 app.use(express.static("public"));
 
