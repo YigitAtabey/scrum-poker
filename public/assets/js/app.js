@@ -92,6 +92,12 @@ window.addEventListener("DOMContentLoaded", () => {
   // Son aktiviteleri güncelle
   updateRecentActivity();
   
+  // Hemen tekrar dene (bağlantı gecikmesi için)
+  setTimeout(() => {
+    updateStats();
+    updateRecentActivity();
+  }, 500);
+  
   // İstatistikleri her 5 saniyede bir güncelle
   setInterval(updateStats, 5000);
   
@@ -170,6 +176,12 @@ function initSocket() {
   
   globalSocket.on("connect", () => {
     console.log("✅ Socket.IO başarıyla bağlandı!");
+    
+    // Bağlantı kurulur kurulmaz hemen istatistikleri al
+    setTimeout(() => {
+      updateStats();
+      updateRecentActivity();
+    }, 100);
   });
   
   globalSocket.on("connect_error", (error) => {
@@ -216,6 +228,8 @@ function updateStats() {
   
   if (socket.connected) {
     console.log("Socket.IO bağlandı, istatistikler isteniyor...");
+    
+    // Hemen istatistik iste
     socket.emit("getStats", (stats) => {
       console.log("Sunucudan gelen istatistikler:", stats);
       if (stats) {

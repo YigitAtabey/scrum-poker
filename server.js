@@ -9,7 +9,11 @@ const io = new Server(http, {
     methods: ["GET", "POST"],
     credentials: true
   },
-  transports: ["websocket", "polling"]
+  transports: ["websocket", "polling"],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  upgradeTimeout: 10000
 });
 
 app.use(express.static("public"));
@@ -266,6 +270,10 @@ io.on("connection", (socket) => {
     io.to(normalizedRoomId).emit("state", roomState(normalizedRoomId));
     // Ayrı bir history yayını da yap (istemciler direkt listeyi güncellesin)
     io.to(normalizedRoomId).emit("history", rooms[normalizedRoomId].history || []);
+    
+    // Yeni kullanıcıya hemen state gönder - gecikmeyi önle
+    socket.emit("state", roomState(normalizedRoomId));
+    socket.emit("history", rooms[normalizedRoomId].history || []);
     
     // Yeni kullanıcı katıldı aktivitesi ekle
     if (!rooms[normalizedRoomId].activities) rooms[normalizedRoomId].activities = [];

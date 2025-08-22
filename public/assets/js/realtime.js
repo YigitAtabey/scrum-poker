@@ -14,6 +14,15 @@ const socket = io(SOCKET_URL, {
   forceNew: true
 });
 
+// Bağlantı kurulduğunda hemen state talep et
+socket.on("connect", () => {
+  console.log("Socket.IO bağlantısı kuruldu");
+  if (ROOM_ID) {
+    // Eğer zaten bir odadaysak, state'i yenile
+    socket.emit("getState");
+  }
+});
+
 function getQuery(key) {
   const url = new URL(window.location.href);
   return url.searchParams.get(key);
@@ -53,8 +62,16 @@ window.RT = {
   join(roomId, name) {
     ROOM_ID = roomId;
     socket.emit("join", { roomId, name });
-    // Katılır katılmaz state talep et (yarışları engellemek için)
-    socket.emit("getState");
+    
+    // Hemen state talep et - gecikmeyi önle
+    setTimeout(() => {
+      socket.emit("getState");
+    }, 100);
+    
+    // Ek güvenlik için 500ms sonra tekrar dene
+    setTimeout(() => {
+      socket.emit("getState");
+    }, 500);
   },
   vote(card) {
     this.myVote = card;        // reveal öncesi highlight için
