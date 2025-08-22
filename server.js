@@ -40,7 +40,16 @@ function isRoomOwner(roomId, socketId) {
 
 function roomState(roomId, revealedOnly=false) {
   const r = rooms[roomId] || { revealed:false, currentTask:"", history:[], users:{}, votes:{} };
-  const usersArr = Object.values(r.users); // [{id,name}, ...]
+  
+  // Kullanıcıların lastSeen bilgisini güncelle
+  const now = Date.now();
+  Object.values(r.users).forEach(user => {
+    if (!user.lastSeen) {
+      user.lastSeen = now;
+    }
+  });
+  
+  const usersArr = Object.values(r.users); // [{id,name,lastSeen}, ...]
   
   const state = {
     roomId,
@@ -61,7 +70,8 @@ function roomState(roomId, revealedOnly=false) {
     votes: r.votes,
     voted: Object.keys(r.votes),
     voteCount: Object.keys(r.votes).length,
-    owner: r.owner
+    owner: r.owner,
+    userCount: usersArr.length
   });
   
   return state;
@@ -76,10 +86,24 @@ function getGlobalStats() {
   
   // Tüm odalardaki kullanıcıları ve oyları topla
   Object.values(rooms).forEach(room => {
-    totalUsers += Object.keys(room.users || {}).length;
-    const roomVotes = Object.values(room.votes || {});
-    totalVotes += roomVotes.length;
-    allVotes.push(...roomVotes);
+    // Sadece aktif kullanıcıları say (son 5 dakika içinde aktif olan)
+    const now = Date.now();
+    const activeUsers = Object.values(room.users || {}).filter(user => {
+      return user.lastSeen && (now - user.lastSeen) < (5 * 60 * 1000); // 5 dakika
+    });
+    totalUsers += activeUsers.length;
+    
+    // Sadece aktif oyları say (son 10 dakika içinde verilen)
+    const activeVotes = Object.entries(room.votes || {}).filter(([userId, vote]) => {
+      const user = room.users[userId];
+      return user && user.lastSeen && (now - user.lastSeen) < (10 * 60 * 1000); // 10 dakika
+    });
+    totalVotes += activeVotes.length;
+    
+    // Aktif oyları ekle
+    activeVotes.forEach(([userId, vote]) => {
+      allVotes.push(vote);
+    });
   });
   
   // Ortalama puanı hesapla
@@ -91,6 +115,8 @@ function getGlobalStats() {
   const avgPoints = numericVotes.length > 0 
     ? (numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length).toFixed(1)
     : "0.0";
+  
+  console.log(`📊 Global Stats: ${totalRooms} rooms, ${totalUsers} users, ${totalVotes} votes, ${avgPoints} avg`);
   
   return {
     totalRooms,
@@ -259,7 +285,13 @@ io.on("connection", (socket) => {
     // Debug: Final name'i kontrol et
     console.log(`Final name that will be used: "${finalName}"`);
 
-    rooms[normalizedRoomId].users[socket.id] = { id: socket.id, name: finalName };
+    // Kullanıcıyı ekle ve lastSeen bilgisini güncelle
+    const now = Date.now();
+    rooms[normalizedRoomId].users[socket.id] = { 
+      id: socket.id, 
+      name: finalName,
+      lastSeen: now
+    };
     socket.join(normalizedRoomId);
     socket.data.roomId = normalizedRoomId;
 
@@ -493,6 +525,46 @@ io.on("connection", (socket) => {
         rooms[roomId].activities = rooms[roomId].activities.slice(0, 10);
       }
     }
+  });
+
+  // Chat mesajı gönderme
+  socket.on("chatMessage", (message) => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    
+    const userName = rooms[roomId].users[socket.id]?.name;
+    if (!userName) return;
+    
+    const chatMessage = {
+      id: Date.now() + Math.random(), // Unique ID
+      user: userName,
+      message: String(message || "").trim(),
+      timestamp: Date.now(),
+      type: 'chat'
+    };
+    
+    // Chat mesajını odaya ekle
+    if (!rooms[roomId].chat) rooms[roomId].chat = [];
+    rooms[roomId].chat.push(chatMessage);
+    
+    // Son 50 mesajı tut
+    if (rooms[roomId].chat.length > 50) {
+      rooms[roomId].chat = rooms[roomId].chat.slice(-50);
+    }
+    
+    // Chat mesajını odaya yayınla
+    io.to(roomId).emit("chatMessage", chatMessage);
+    
+    console.log(`Chat message from ${userName} in room ${roomId}: ${chatMessage.message}`);
+  });
+  
+  // Chat geçmişini getir
+  socket.on("getChatHistory", () => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    
+    const chatHistory = rooms[roomId].chat || [];
+    socket.emit("chatHistory", chatHistory);
   });
 
   socket.on("disconnect", () => {

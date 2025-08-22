@@ -279,4 +279,34 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("roomId").textContent = roomId;
   RT.join(roomId, name);
+  
+  // Chat geçmişini yükle
+  setTimeout(() => {
+    socket.emit("getChatHistory");
+  }, 1000);
+});
+
+// ===== CHAT FUNCTIONS =====
+
+// Chat mesajı gönderme
+RT.sendChatMessage = function(message) {
+  if (!message || !message.trim()) return;
+  
+  socket.emit("chatMessage", message.trim());
+};
+
+// Chat mesajı alma
+socket.on("chatMessage", (chatMessage) => {
+  // Custom event ile chat mesajını yayınla
+  try {
+    window.dispatchEvent(new CustomEvent("rt:chatMessage", { detail: chatMessage }));
+  } catch {}
+});
+
+// Chat geçmişi alma
+socket.on("chatHistory", (chatHistory) => {
+  // Custom event ile chat geçmişini yayınla
+  try {
+    window.dispatchEvent(new CustomEvent("rt:chatHistory", { detail: chatHistory }));
+  } catch {}
 });

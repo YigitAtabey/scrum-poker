@@ -66,6 +66,43 @@ function setupFormSubmit() {
   });
 }
 
+// Son odaları güncelle
+function updateRecentRooms() {
+  const recentRoomsEl = document.getElementById("recentRooms");
+  if (!recentRoomsEl) return;
+  
+  const rooms = JSON.parse(localStorage.getItem("recentRooms") || "[]");
+  
+  if (rooms.length === 0) {
+    // Hiç oda yoksa boş mesajı göster
+    recentRoomsEl.innerHTML = `
+      <div class="recent-empty">
+        <div class="empty-icon">📋</div>
+        <p>Henüz hiç odaya katılmadın</p>
+        <small>İlk odaya katıldığında burada görünecek</small>
+      </div>
+    `;
+  } else {
+    // Odalar varsa listeyi göster
+    recentRoomsEl.innerHTML = `
+      <div class="recent-rooms-list">
+        ${rooms.map(room => `
+          <div class="recent-room-item">
+            <div class="room-info">
+              <span class="room-icon">🚪</span>
+              <span class="room-code">${room.toUpperCase()}</span>
+            </div>
+            <a href="room.html?room=${room}" class="room-join-btn">
+              <span class="btn-icon">▶️</span>
+              Katıl
+            </a>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+}
+
 // Sayfa yüklenince localStorage'dan verileri yükle ve son odalar listesini doldur
 window.addEventListener("DOMContentLoaded", () => {
   // Form submit event listener'ını ekle
@@ -74,18 +111,12 @@ window.addEventListener("DOMContentLoaded", () => {
   // Önce localStorage'dan verileri yükle
   loadDataFromLocalStorage();
   
-  const ul = document.getElementById("recentRooms");
-  if (!ul) return;
-  const rooms = JSON.parse(localStorage.getItem("recentRooms") || "[]");
-  rooms.forEach((r) => {
-    const li = document.createElement("li");
-    const a = document.createElement("a");
-    a.href = `room.html?room=${r}`;
-    a.textContent = r;
-    li.appendChild(a);
-    ul.appendChild(li);
-  });
-
+  // Son odaları güncelle
+  updateRecentRooms();
+  
+  // İstatistikleri hemen sıfırla
+  resetStats();
+  
   // İstatistikleri güncelle
   updateStats();
   
@@ -98,8 +129,8 @@ window.addEventListener("DOMContentLoaded", () => {
     updateRecentActivity();
   }, 500);
   
-  // İstatistikleri her 5 saniyede bir güncelle
-  setInterval(updateStats, 5000);
+  // İstatistikleri her 2 saniyede bir güncelle (daha sık)
+  setInterval(updateStats, 2000);
   
   // Aktiviteleri her 15 saniyede bir güncelle
   setInterval(updateRecentActivity, 15000);
@@ -111,21 +142,7 @@ window.addEventListener("DOMContentLoaded", () => {
 // LocalStorage'dan verileri yükle
 function loadDataFromLocalStorage() {
   try {
-    // İstatistikleri yükle
-    const savedStats = JSON.parse(localStorage.getItem("scrumPokerStats") || "{}");
-    if (savedStats.totalRooms !== undefined) {
-      const totalRoomsEl = document.getElementById("totalRooms");
-      const activeUsersEl = document.getElementById("activeUsers");
-      const totalVotesEl = document.getElementById("totalVotes");
-      const avgPointsEl = document.getElementById("avgPoints");
-      
-      if (totalRoomsEl) totalRoomsEl.textContent = savedStats.totalRooms || "0";
-      if (activeUsersEl) activeUsersEl.textContent = savedStats.activeUsers || "0";
-      if (totalVotesEl) totalVotesEl.textContent = savedStats.totalVotes || "0";
-      if (avgPointsEl) avgPointsEl.textContent = savedStats.avgPoints || "0.0";
-    }
-    
-    // Aktiviteleri yükle
+    // Sadece aktiviteleri yükle, istatistikleri yükleme
     const savedActivities = JSON.parse(localStorage.getItem("scrumPokerActivities") || "[]");
     const activityList = document.getElementById("recentActivity");
     if (activityList && savedActivities.length > 0) {
@@ -205,80 +222,82 @@ function initSocket() {
 
 // İstatistikleri güncelle
 function updateStats() {
-  console.log("updateStats çağrıldı");
+  console.log("🔄 updateStats çağrıldı");
   
-  // Önce localStorage'dan mevcut istatistikleri yükle
-  const savedStats = JSON.parse(localStorage.getItem("scrumPokerStats") || "{}");
-  
+  // Socket bağlantısını kontrol et
   const socket = initSocket();
   if (!socket) {
-    console.log("Socket bağlantısı kurulamadı, localStorage'dan yükleniyor");
-    // localStorage'dan yükle
-    const totalRoomsEl = document.getElementById("totalRooms");
-    const activeUsersEl = document.getElementById("activeUsers");
-    const totalVotesEl = document.getElementById("totalVotes");
-    const avgPointsEl = document.getElementById("avgPoints");
-    
-    if (totalRoomsEl) totalRoomsEl.textContent = savedStats.totalRooms || "0";
-    if (activeUsersEl) activeUsersEl.textContent = savedStats.activeUsers || "0";
-    if (totalVotesEl) totalVotesEl.textContent = savedStats.totalVotes || "0";
-    if (avgPointsEl) avgPointsEl.textContent = savedStats.avgPoints || "0.0";
+    console.log("❌ Socket bağlantısı kurulamadı, istatistikler sıfırlanıyor");
+    // Socket bağlantısı yoksa istatistikleri sıfırla
+    resetStats();
     return;
   }
   
   if (socket.connected) {
-    console.log("Socket.IO bağlandı, istatistikler isteniyor...");
+    console.log("✅ Socket.IO bağlandı, istatistikler isteniyor...");
     
     // Hemen istatistik iste
     socket.emit("getStats", (stats) => {
-      console.log("Sunucudan gelen istatistikler:", stats);
-      if (stats) {
+      console.log("📊 Sunucudan gelen istatistikler:", stats);
+      if (stats && typeof stats === 'object') {
         // İstatistikleri localStorage'a kaydet
         const statsToSave = {
-          totalRooms: stats.totalRooms || 0,
-          activeUsers: stats.activeUsers || 0,
-          totalVotes: stats.totalVotes || 0,
-          avgPoints: stats.avgPoints || "0.0",
+          totalRooms: parseInt(stats.totalRooms) || 0,
+          activeUsers: parseInt(stats.activeUsers) || 0,
+          totalVotes: parseInt(stats.totalVotes) || 0,
+          avgPoints: parseFloat(stats.avgPoints) || 0.0,
           lastUpdated: Date.now()
         };
         localStorage.setItem("scrumPokerStats", JSON.stringify(statsToSave));
         
         // UI'yi güncelle
-        const totalRoomsEl = document.getElementById("totalRooms");
-        const activeUsersEl = document.getElementById("activeUsers");
-        const totalVotesEl = document.getElementById("totalVotes");
-        const avgPointsEl = document.getElementById("avgPoints");
-        
-        if (totalRoomsEl) totalRoomsEl.textContent = statsToSave.totalRooms;
-        if (activeUsersEl) activeUsersEl.textContent = statsToSave.activeUsers;
-        if (totalVotesEl) totalVotesEl.textContent = statsToSave.totalVotes;
-        if (avgPointsEl) avgPointsEl.textContent = statsToSave.avgPoints;
+        updateStatsUI(statsToSave);
+        console.log("✅ İstatistikler güncellendi:", statsToSave);
       } else {
-        // Hata durumunda localStorage'dan yükle
-        const totalRoomsEl = document.getElementById("totalRooms");
-        const activeUsersEl = document.getElementById("activeUsers");
-        const totalVotesEl = document.getElementById("totalVotes");
-        const avgPointsEl = document.getElementById("avgPoints");
-        
-        if (totalRoomsEl) totalRoomsEl.textContent = savedStats.totalRooms || "0";
-        if (activeUsersEl) activeUsersEl.textContent = savedStats.activeUsers || "0";
-        if (totalVotesEl) totalVotesEl.textContent = savedStats.totalVotes || "0";
-        if (avgPointsEl) avgPointsEl.textContent = savedStats.avgPoints || "0.0";
+        console.log("❌ Geçersiz istatistik verisi, istatistikler sıfırlanıyor");
+        resetStats();
       }
     });
-  } else {
-    console.log("Socket henüz bağlanmadı, localStorage'dan yükleniyor");
-    // localStorage'dan yükle
-    const totalRoomsEl = document.getElementById("totalRooms");
-    const activeUsersEl = document.getElementById("activeUsers");
-    const totalVotesEl = document.getElementById("totalVotes");
-    const avgPointsEl = document.getElementById("avgPoints");
     
-    if (totalRoomsEl) totalRoomsEl.textContent = savedStats.totalRooms || "0";
-    if (activeUsersEl) activeUsersEl.textContent = savedStats.activeUsers || "0";
-    if (totalVotesEl) totalVotesEl.textContent = savedStats.totalVotes || "0";
-    if (avgPointsEl) avgPointsEl.textContent = savedStats.avgPoints || "0.0";
+    // Timeout ekle - 3 saniye içinde cevap gelmezse sıfırla
+    setTimeout(() => {
+      if (!localStorage.getItem("scrumPokerStats")) {
+        console.log("⏰ İstatistik timeout, sıfırlanıyor");
+        resetStats();
+      }
+    }, 3000);
+    
+  } else {
+    console.log("⏳ Socket henüz bağlanmadı, istatistikler sıfırlanıyor");
+    resetStats();
   }
+}
+
+// İstatistikleri sıfırla
+function resetStats() {
+  const defaultStats = {
+    totalRooms: 0,
+    activeUsers: 0,
+    totalVotes: 0,
+    avgPoints: 0.0,
+    lastUpdated: Date.now()
+  };
+  
+  localStorage.setItem("scrumPokerStats", JSON.stringify(defaultStats));
+  updateStatsUI(defaultStats);
+}
+
+// İstatistik UI'ını güncelle
+function updateStatsUI(stats) {
+  const totalRoomsEl = document.getElementById("totalRooms");
+  const activeUsersEl = document.getElementById("activeUsers");
+  const totalVotesEl = document.getElementById("totalVotes");
+  const avgPointsEl = document.getElementById("avgPoints");
+  
+  if (totalRoomsEl) totalRoomsEl.textContent = stats.totalRooms;
+  if (activeUsersEl) activeUsersEl.textContent = stats.activeUsers;
+  if (totalVotesEl) totalVotesEl.textContent = stats.totalVotes;
+  if (avgPointsEl) avgPointsEl.textContent = stats.avgPoints.toFixed(1);
 }
 
 // Bağlantı durumunu göster

@@ -3,145 +3,258 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scrum Poker</title>
+  <title>Scrum Poker - Takım Oylama Platformu</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/main.css" />
 </head>
 <body>
-  <!-- Hero Section -->
-  <div class="hero-section">
-    <div class="hero-content">
-      <h1 class="hero-title">
-        <span class="gradient-text">Scrum Poker</span>
-        <span class="hero-subtitle">Takım Oylama Platformu</span>
-      </h1>
-      <p class="hero-description">
-        Agile takımlar için modern, hızlı ve etkili story point tahmin aracı
-      </p>
-      
-      <!-- About linki -->
-      <div class="about-link">
-        <a href="about.html" class="btn btn-outline">📚 Nasıl Kullanılır?</a>
+  <!-- Header -->
+  <header class="main-header">
+    <div class="header-container">
+      <div class="header-brand">
+        <div class="brand-logo">🎯</div>
+        <h1 class="brand-title">Scrum Poker</h1>
       </div>
+      <nav class="header-nav">
+        <a href="about.html" class="nav-link">📚 Nasıl Kullanılır?</a>
+        <a href="https://github.com" class="nav-link" target="_blank">📖 Dokümantasyon</a>
+      </nav>
     </div>
-    
-    <!-- Hero Visual -->
-    <div class="hero-visual">
-      <div class="floating-card" data-value="8">8</div>
-      <div class="floating-card" data-value="13">13</div>
-      <div class="floating-card" data-value="21">21</div>
-      <div class="floating-card" data-value="☕">☕</div>
-    </div>
-  </div>
+  </header>
 
-  <!-- Uyarı/ bilgi mesajları -->
-  <div id="alerts" aria-live="polite"></div>
-
-  <!-- Odaya giriş / oluşturma formu -->
-  <div class="join-section">
-    <div class="join-container">
-      <h2 class="join-title">Odaya Katıl veya Oluştur</h2>
-      <form id="joinForm" class="join-form">
-        <div class="form-group">
-          <label for="username" class="form-label">👤 Kullanıcı Adın</label>
-          <input type="text" id="username" placeholder="Örn: Ahmet Yılmaz" required />
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-container">
+        <div class="hero-content">
+          <h1 class="hero-title">
+            <span class="gradient-text">Agile Takımlar İçin</span>
+            <span class="hero-main-title">Modern Scrum Poker</span>
+          </h1>
+          <p class="hero-description">
+            Story point tahminlerini hızlı, etkili ve eğlenceli bir şekilde yapın. 
+            Takımınızla birlikte daha iyi kararlar alın.
+          </p>
+          
+          <div class="hero-features">
+            <div class="feature-tag">🚀 Anında Başlangıç</div>
+            <div class="feature-tag">👥 Gerçek Zamanlı</div>
+            <div class="feature-tag">📱 Mobil Uyumlu</div>
+            <div class="feature-tag">🎨 Modern Tasarım</div>
+          </div>
         </div>
         
-        <div class="form-group">
-          <label for="room" class="form-label">🚪 Oda Kodu (Opsiyonel)</label>
-          <input type="text" id="room" placeholder="Boş bırakırsan yeni oda oluşturulur" />
-          <small class="form-hint">Mevcut bir odaya katılmak için kod girin</small>
+        <div class="hero-visual">
+          <div class="floating-cards">
+            <div class="floating-card" data-value="8">8</div>
+            <div class="floating-card" data-value="13">13</div>
+            <div class="floating-card" data-value="21">21</div>
+            <div class="floating-card" data-value="☕">☕</div>
+            <div class="floating-card" data-value="?">?</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Join Section -->
+    <section class="join-section">
+      <div class="join-container">
+        <div class="join-card">
+          <div class="join-header">
+            <h2 class="join-title">🚀 Odaya Katıl veya Oluştur</h2>
+            <p class="join-subtitle">Takımınızla birlikte story point tahmini yapmaya başlayın</p>
+          </div>
+          
+          <form id="joinForm" class="join-form">
+            <div class="form-group">
+              <label for="username" class="form-label">
+                <span class="label-icon">👤</span>
+                Kullanıcı Adın
+              </label>
+              <input 
+                type="text" 
+                id="username" 
+                class="form-input" 
+                placeholder="Örn: Ahmet Yılmaz" 
+                required 
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="room" class="form-label">
+                <span class="label-icon">🚪</span>
+                Oda Kodu (Opsiyonel)
+              </label>
+              <input 
+                type="text" 
+                id="room" 
+                class="form-input" 
+                placeholder="Boş bırakırsan yeni oda oluşturulur" 
+              />
+              <small class="form-hint">
+                💡 Mevcut bir odaya katılmak için kod girin, boş bırakırsan yeni oda oluşturulur
+              </small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary join-btn">
+              <span class="btn-icon">🚀</span>
+              Odaya Katıl
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Rooms Section -->
+    <section class="recent-section">
+      <div class="recent-container">
+        <div class="recent-header">
+          <h3 class="recent-title">📚 Son Katıldığın Odalar</h3>
+          <p class="recent-subtitle">Daha önce katıldığın odalara hızlıca eriş</p>
         </div>
         
-        <button type="submit" class="btn btn-primary join-btn">
-          🚀 Odaya Katıl
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <h3>Son Katıldığın Odalar</h3>
-  <ul id="recentRooms"></ul>
-
-  <!-- Alt Kısım - İstatistikler ve Özellikler -->
-  <div class="bottom-section">
-    <div class="stats-container">
-      <div class="stat-card">
-        <div class="stat-icon">🏠</div>
-        <div class="stat-number" id="totalRooms">-</div>
-        <div class="stat-label">Toplam Oda</div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">👥</div>
-        <div class="stat-number" id="activeUsers">-</div>
-        <div class="stat-label">Aktif Kullanıcı</div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">🎯</div>
-        <div class="stat-number" id="totalVotes">-</div>
-        <div class="stat-label">Toplam Oy</div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">⚡</div>
-        <div class="stat-number" id="avgPoints">-</div>
-        <div class="stat-label">Ortalama Puan</div>
-      </div>
-    </div>
-
-    <div class="features-container">
-      <div class="feature-item">
-        <div class="feature-icon">🚀</div>
-        <h3>Hızlı Başlangıç</h3>
-        <p>Kullanıcı adını gir, oda kodunu yaz (veya boş bırak), hemen başla!</p>
-      </div>
-      
-      <div class="feature-item">
-        <div class="feature-icon">🎴</div>
-        <h3>Fibonacci Kartlar</h3>
-        <p>0, ½, 1, 2, 3, 5, 8, 13, 21, ?, ☕ - Standart Scrum Poker kartları</p>
-      </div>
-      
-      <div class="feature-item">
-        <div class="feature-icon">📊</div>
-        <h3>Gerçek Zamanlı</h3>
-        <p>Anlık oylama, canlı sonuçlar ve takım senkronizasyonu</p>
-      </div>
-    </div>
-
-    <div class="recent-activity">
-      <div class="activity-header">
-        <h3>🎬 Son Aktiviteler</h3>
-        <button class="btn-refresh" onclick="updateRecentActivity()" title="Aktiviteleri yenile">
-          🔄
-        </button>
-      </div>
-      <div class="activity-list" id="recentActivity">
-        <div class="activity-item">
-          <span class="activity-time">⏳</span>
-          <span class="activity-text">Aktiviteler yükleniyor...</span>
+        <div class="recent-rooms" id="recentRooms">
+          <div class="recent-empty">
+            <div class="empty-icon">📋</div>
+            <p>Henüz hiç odaya katılmadın</p>
+            <small>İlk odaya katıldığında burada görünecek</small>
+          </div>
         </div>
       </div>
-      
-      <!-- Bağlantı durumu ve yeniden deneme -->
-      <div class="connection-status" id="connectionStatus" style="display: none;">
-        <div class="status-item">
-          <span class="status-icon">🔗</span>
-          <span class="status-text">Bağlantı durumu kontrol ediliyor...</span>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+      <div class="stats-container">
+        <div class="stats-header">
+          <h3 class="stats-title">📊 Platform İstatistikleri</h3>
+          <p class="stats-subtitle">Scrum Poker'ın güncel durumu</p>
         </div>
-        <button class="btn-retry" onclick="retryConnection()" style="display: none;">
-          🔄 Yeniden Dene
-        </button>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🏠</div>
+            <div class="stat-number" id="totalRooms">-</div>
+            <div class="stat-label">Toplam Oda</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-number" id="activeUsers">-</div>
+            <div class="stat-label">Aktif Kullanıcı</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-number" id="totalVotes">-</div>
+            <div class="stat-label">Toplam Oy</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-number" id="avgPoints">-</div>
+            <div class="stat-label">Ortalama Puan</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+      <div class="features-container">
+        <div class="features-header">
+          <h3 class="features-title">✨ Özellikler</h3>
+          <p class="features-subtitle">Scrum Poker'ı özel kılan özellikler</p>
+        </div>
+        
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🚀</div>
+            <h4 class="feature-title">Hızlı Başlangıç</h4>
+            <p class="feature-description">
+              Kullanıcı adını gir, oda kodunu yaz (veya boş bırak), hemen başla! 
+              Hiçbir kayıt gerektirmez.
+            </p>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon">👥</div>
+            <h4 class="feature-title">Gerçek Zamanlı</h4>
+            <p class="feature-description">
+              Takım üyeleri anlık olarak oy verir, sonuçlar anında görünür. 
+              Hiçbir gecikme yok.
+            </p>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <h4 class="feature-title">Mobil Uyumlu</h4>
+            <p class="feature-description">
+              Tüm cihazlarda mükemmel çalışır. Telefon, tablet, bilgisayar - 
+              hepsinde aynı deneyim.
+            </p>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon">🎨</div>
+            <h4 class="feature-title">Modern Tasarım</h4>
+            <p class="feature-description">
+              Göz alıcı, kullanıcı dostu arayüz. Dark mode desteği ve 
+              profesyonel görünüm.
+            </p>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h4 class="feature-title">Güvenli</h4>
+            <p class="feature-description">
+              Oda kodları ile güvenli erişim. Sadece davet edilen kişiler 
+              odaya katılabilir.
+            </p>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h4 class="feature-title">Detaylı İstatistikler</h4>
+            <p class="feature-description">
+              Ortalama, medyan, mod gibi detaylı istatistikler. 
+              Takım performansını analiz edin.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="footer-container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <div class="brand-logo">🎯</div>
+          <h3 class="brand-title">Scrum Poker</h3>
+        </div>
+        <p class="footer-description">
+          Agile takımlar için modern story point tahmin aracı
+        </p>
+      </div>
+      
+      <div class="footer-links">
+        <a href="about.html" class="footer-link">📚 Nasıl Kullanılır?</a>
+        <a href="https://github.com" class="footer-link" target="_blank">📖 Dokümantasyon</a>
+        <a href="https://github.com" class="footer-link" target="_blank">🐛 Hata Bildir</a>
+      </div>
+      
+      <div class="footer-copyright">
+        <p>&copy; 2024 Scrum Poker. Tüm hakları saklıdır.</p>
       </div>
     </div>
-  </div>
+  </footer>
 
-  <!-- Scriptler -->
-  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.8.1/dist/socket.io.min.js"></script>
+  <!-- Scripts -->
   <script src="assets/js/app.js"></script>
 </body>
 </html>

@@ -2,97 +2,324 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
   <title>Scrum Poker - Oda</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="assets/css/main.css" />
-  
-
 </head>
 <body>
-  <header class="topbar">
-    <div><strong>Oda:</strong> <span id="roomId">-</span></div>
-    <div>
-      <span id="status" class="badge" role="status" aria-live="polite">Beklemede</span>
-      <button id="revealBtn" class="btn btn-primary">Reveal</button>
-      <button id="resetBtn" class="btn btn-outline-secondary">Reset</button>
-      <button id="leaveBtn" class="btn btn-outline-danger">Odadan Çık</button>
+  <!-- Header -->
+  <header class="modern-header">
+    <div class="header-content">
+      <div class="room-info">
+        <div class="room-id-section">
+          <span class="room-label">Oda</span>
+          <span id="roomId" class="room-id">-</span>
+        </div>
+        <div class="room-status">
+          <span id="status" class="status-badge" role="status" aria-live="polite">Beklemede</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="revealBtn" class="action-btn primary">
+          <span class="btn-icon">👁️</span>
+          <span class="btn-text">Reveal</span>
+        </button>
+        <button id="resetBtn" class="action-btn secondary">
+          <span class="btn-icon">🔄</span>
+          <span class="btn-text">Reset</span>
+        </button>
+        <button id="leaveBtn" class="action-btn danger">
+          <span class="btn-icon">🚪</span>
+          <span class="btn-text">Çık</span>
+        </button>
+      </div>
     </div>
   </header>
 
+  <!-- Alerts -->
   <div id="alerts" aria-live="polite"></div>
 
-  <div class="layout">
-    <section>
-      <h3>Katılımcılar</h3>
-      <ul id="userList" class="users"></ul>
-    </section>
-
-    <section>
-      <h3>Desteden Seç</h3>
-      <div id="deck" class="deck"></div>
-
-      <div class="task-section">
-        <div class="task-header">
-          <div class="task-icon">📋</div>
-          <h3>Görev</h3>
-          <div class="task-divider"></div>
+  <!-- Main Layout -->
+  <main class="main-layout">
+    <!-- Left Panel: Participants & Chat -->
+    <aside class="left-panel">
+      <!-- Participants -->
+      <div class="participants-card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="card-icon">👥</span>
+            Katılımcılar
+          </h3>
+          <div class="participants-count">
+            <span id="participantCount">0</span>
+          </div>
         </div>
-        
-        <!-- Görev giriş alanı -->
-        <div class="task-input-container" id="taskInputContainer">
-          <div class="task-input-wrapper">
-            <div class="input-icon">✏️</div>
-            <input 
-              id="taskInput" 
-              type="text" 
-              placeholder="Görev adını yazın... (örn: US-123: Login sayfası tasarımı)" 
-              class="task-input-field"
-            />
-            <button id="taskSaveBtn" class="task-save-btn">
-              <span class="btn-icon">💾</span>
-              <span class="btn-text">Kaydet</span>
+        <div class="card-content">
+          <ul id="userList" class="participants-list"></ul>
+        </div>
+      </div>
+
+             <!-- Chat -->
+       <div class="chat-card">
+         <div class="card-header">
+           <h3 class="card-title">
+             <span class="card-icon">💬</span>
+             Son Mesajlar
+           </h3>
+           <button class="chat-open-btn" id="chatOpenBtn" title="Sohbeti aç">
+             <span class="btn-icon">💬</span>
+           </button>
+         </div>
+         <div class="card-content">
+           <div class="chat-container">
+             <div id="chatMessages" class="chat-messages">
+               <!-- Tüm mesajlar burada gösterilecek (scroll ile erişilebilir) -->
+             </div>
+             <div class="chat-input-container">
+               <input 
+                 id="chatInput" 
+                 type="text" 
+                 placeholder="Hızlı mesaj yazın..." 
+                 class="chat-input"
+                 maxlength="200"
+               />
+               <button id="chatSendBtn" class="chat-send-btn">
+                 <span class="btn-icon">📤</span>
+               </button>
+             </div>
+             <div class="chat-footer">
+               <div class="chat-footer-text">
+                 <span class="chat-footer-icon">💡</span>
+                 Tam sohbet için yukarıdaki butona tıklayın
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+    </aside>
+
+    <!-- Center Panel: Main Content -->
+    <section class="center-panel">
+      <!-- Task Section -->
+      <div class="task-card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="card-icon">📋</span>
+            Görev Yönetimi
+          </h3>
+          <div class="task-header-actions">
+            <button class="task-help-btn" title="Görev nasıl kullanılır?">
+              <span class="btn-icon">❓</span>
             </button>
           </div>
-          <div class="task-input-hint">
-            <span class="hint-icon">💡</span>
-            Görev adına tıklayarak pop-up ile düzenleyebilirsiniz
-          </div>
         </div>
-        
-        <!-- Aktif görev gösterimi -->
-        <div id="currentTaskDisplay" class="current-task-display" style="display: none;">
-          <div class="current-task-header">
-            <span class="current-task-label">🎯 AKTİF GÖREV</span>
-            <div class="task-status-badge">Aktif</div>
+        <div class="card-content">
+          <!-- Görev giriş alanı -->
+          <div class="task-input-container" id="taskInputContainer">
+            <div class="task-input-wrapper">
+              <div class="input-icon">✏️</div>
+              <input 
+                id="taskInput" 
+                type="text" 
+                placeholder="Görev adını yazın... (örn: US-123: Login sayfası tasarımı)" 
+                class="task-input-field"
+              />
+              <button id="taskSaveBtn" class="task-save-btn">
+                <span class="btn-icon">💾</span>
+                <span class="btn-text">Kaydet</span>
+              </button>
+            </div>
+            <div class="task-input-hint">
+              <span class="hint-icon">💡</span>
+              Görev adını yazıp kaydedin, sonra oy vermeye başlayabilirsiniz
+            </div>
           </div>
-          <div class="current-task-content">
-            <h3 id="currentTaskText" class="current-task-text"></h3>
-            <div class="task-actions">
-              <small class="task-change-hint">
-                <span class="hint-icon">✏️</span>
-                Görev adına tıklayarak düzenleyebilirsiniz
-              </small>
+          
+          <!-- Aktif görev gösterimi -->
+          <div id="currentTaskDisplay" class="current-task-display" style="display: none;">
+            <div class="current-task-banner">
+              <div class="banner-content">
+                <div class="banner-icon">🎯</div>
+                <div class="banner-text">
+                  <div class="banner-title">AKTİF GÖREV</div>
+                  <div class="banner-subtitle">Şu anda oy veriliyor</div>
+                </div>
+                <div class="banner-status">
+                  <div class="status-indicator active"></div>
+                  <span class="status-text">Aktif</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="current-task-content">
+              <div class="task-main-info">
+                <h3 id="currentTaskText" class="current-task-text"></h3>
+                <div class="task-meta">
+                  <div class="task-meta-item">
+                    <span class="meta-icon">📅</span>
+                    <span class="meta-label">Başlangıç:</span>
+                    <span class="meta-value" id="taskStartTime">-</span>
+                  </div>
+                  <div class="task-meta-item">
+                    <span class="meta-icon">👥</span>
+                    <span class="meta-label">Katılımcı:</span>
+                    <span class="meta-value" id="taskParticipantCount">-</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="task-actions">
+                <button class="task-edit-btn" id="taskEditBtn">
+                  <span class="btn-icon">✏️</span>
+                  <span class="btn-text">Düzenle</span>
+                </button>
+                <button class="task-copy-btn" id="taskCopyBtn">
+                  <span class="btn-icon">📋</span>
+                  <span class="btn-text">Kopyala</span>
+                </button>
+                <div class="task-change-hint">
+                  <span class="hint-icon">💡</span>
+                  Görev adına tıklayarak da düzenleyebilirsiniz
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Task Progress Bar -->
+          <div class="task-progress" id="taskProgress" style="display: none;">
+            <div class="progress-header">
+              <span class="progress-label">Oy Durumu</span>
+              <span class="progress-percentage" id="progressPercentage">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-stats">
+              <div class="progress-stat">
+                <span class="stat-icon">✅</span>
+                <span class="stat-label">Oy Veren:</span>
+                <span class="stat-value" id="votedCount">0</span>
+              </div>
+              <div class="progress-stat">
+                <span class="stat-icon">⏳</span>
+                <span class="stat-label">Bekleyen:</span>
+                <span class="stat-value" id="waitingCount">0</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Hazır butonu için özel alan -->
-      <div id="readyButtonContainer" class="ready-button-container"></div>
+      <!-- Voting Cards -->
+      <div class="voting-card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="card-icon">🎯</span>
+            Desteden Seç
+          </h3>
+        </div>
+        <div class="card-content">
+          <div id="deck" class="deck-grid"></div>
+          <!-- Hazır butonu için özel alan -->
+          <div id="readyButtonContainer" class="ready-button-container"></div>
+        </div>
+      </div>
 
-      <h3>Özet İstatistikler</h3>
-      <p id="voteCount" class="muted"></p>
-      <p id="stats" class="muted">Reveal’dan sonra görünecek.</p>
+      <!-- Statistics -->
+      <div class="stats-card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="card-icon">📊</span>
+            İstatistikler
+          </h3>
+        </div>
+        <div class="card-content">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">Oy Durumu:</span>
+              <span id="voteCount" class="stat-value">-</span>
+            </div>
+            <div class="stat-details">
+              <p id="stats" class="muted">Reveal'dan sonra görünecek.</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section>
-      <h3>Geçmiş</h3>
-      <ul id="history" class="history"></ul>
-    </section>
+    <!-- Right Panel: History -->
+    <aside class="right-panel">
+      <div class="history-card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="card-icon">📜</span>
+            Geçmiş
+          </h3>
+          <button class="history-toggle" id="historyToggle">
+            <span class="btn-icon">📊</span>
+          </button>
+        </div>
+        <div class="card-content">
+          <div class="history-content" id="historyContent">
+            <div class="history-list" id="historyList">
+              <!-- Geçmiş kartları buraya gelecek -->
+            </div>
+            <div class="history-empty" id="historyEmpty" style="display: none;">
+              <div class="empty-icon">📝</div>
+              <div class="empty-text">Henüz geçmiş yok</div>
+              <div class="empty-hint">İlk reveal'ınızı yapın</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Chat Modal -->
+  <div id="chatModal" class="chat-modal" style="display: none;">
+    <div class="chat-modal-overlay"></div>
+    <div class="chat-modal-content">
+      <div class="chat-modal-header">
+        <h3 class="chat-modal-title">
+          <span class="chat-modal-icon">💬</span>
+          Sohbet
+        </h3>
+        <button class="chat-modal-close" id="chatModalClose">
+          <span class="close-icon">✕</span>
+        </button>
+      </div>
+      
+      <div class="chat-modal-body">
+        <div class="chat-modal-messages" id="chatModalMessages">
+          <!-- Chat mesajları buraya gelecek -->
+        </div>
+        
+        <div class="chat-modal-input-container">
+          <input 
+            id="chatModalInput" 
+            type="text" 
+            placeholder="Mesajınızı yazın..." 
+            class="chat-modal-input"
+            maxlength="200"
+          />
+          <button id="chatModalSendBtn" class="chat-modal-send-btn">
+            <span class="btn-icon">📤</span>
+          </button>
+        </div>
+        
+        <div class="chat-modal-footer">
+          <div class="chat-modal-info">
+            <span class="chat-modal-status">🟢 Çevrimiçi</span>
+            <span class="chat-modal-participants" id="chatModalParticipants">0 katılımcı</span>
+          </div>
+          <div class="chat-modal-char-counter" id="chatModalCharCounter">0/200</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Sweet Alert CDN -->
