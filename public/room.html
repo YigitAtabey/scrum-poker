@@ -24,6 +24,10 @@
         </div>
       </div>
       <div class="header-actions">
+        <button id="themeBtn" class="action-btn secondary" style="display: none;">
+          <span class="btn-icon">🎨</span>
+          <span class="btn-text">Tema</span>
+        </button>
         <button id="revealBtn" class="action-btn primary">
           <span class="btn-icon">👁️</span>
           <span class="btn-text">Reveal</span>
@@ -317,6 +321,105 @@
             <span class="chat-modal-participants" id="chatModalParticipants">0 katılımcı</span>
           </div>
           <div class="chat-modal-char-counter" id="chatModalCharCounter">0/200</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme Selection Modal -->
+  <div id="themeModal" class="theme-modal" style="display: none;">
+    <div class="theme-modal-overlay"></div>
+    <div class="theme-modal-content">
+      <div class="theme-modal-header">
+        <h3 class="theme-modal-title">
+          <span class="theme-modal-icon">🎨</span>
+          Kart Teması Seç
+        </h3>
+        <button class="theme-modal-close" id="themeModalClose">
+          <span class="close-icon">✕</span>
+        </button>
+      </div>
+      
+      <div class="theme-modal-body">
+        <div class="theme-grid">
+          <div class="theme-option" data-theme="poker">
+            <div class="theme-preview poker-preview">
+              <div class="preview-card">
+                <div class="preview-suit">♠</div>
+                <div class="preview-value">8</div>
+              </div>
+            </div>
+            <div class="theme-info">
+              <h4>Poker Kartları</h4>
+              <p>Klasik poker kartı tasarımı</p>
+            </div>
+          </div>
+          
+          <div class="theme-option" data-theme="tshirt">
+            <div class="theme-preview tshirt-preview">
+              <div class="preview-card">
+                <div class="preview-value">M</div>
+              </div>
+            </div>
+            <div class="theme-info">
+              <h4>T-Shirt Boyutları</h4>
+              <p>XS, S, M, L, XL, XXL</p>
+            </div>
+          </div>
+          
+          <div class="theme-option" data-theme="time">
+            <div class="theme-preview time-preview">
+              <div class="preview-card">
+                <div class="preview-value">2h</div>
+              </div>
+            </div>
+            <div class="theme-info">
+              <h4>Saat</h4>
+              <p>30m, 1h, 2h, 4h, 8h</p>
+            </div>
+          </div>
+          
+          <div class="theme-option" data-theme="fruit">
+            <div class="theme-preview fruit-preview">
+              <div class="preview-card">
+                <div class="preview-value">🍎</div>
+              </div>
+            </div>
+            <div class="theme-info">
+              <h4>Meyve</h4>
+              <p>🍎, 🍌, 🍊, 🍇, 🍓</p>
+            </div>
+          </div>
+          
+          <div class="theme-option" data-theme="animal">
+            <div class="theme-preview animal-preview">
+              <div class="preview-card">
+                <div class="preview-value">🐰</div>
+              </div>
+            </div>
+            <div class="theme-info">
+              <h4>Hayvan</h4>
+              <p>🐰, 🐸, 🐱, 🐶, 🐼</p>
+            </div>
+          </div>
+          
+          <div class="theme-option" data-theme="color">
+            <div class="theme-preview color-preview">
+              <div class="preview-card">
+                <div class="preview-value">🔴</div>
+              </div>
+            </div>
+            <div class="theme-info">
+              <h4>Renk</h4>
+              <p>🔴, 🟢, 🔵, 🟡, 🟣</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="theme-footer">
+          <p class="theme-hint">
+            💡 Tema seçimi sadece görünümü değiştirir, işleyiş aynı kalır
+          </p>
         </div>
       </div>
     </div>

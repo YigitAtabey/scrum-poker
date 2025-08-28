@@ -1,6 +1,79 @@
 // room.js – UI mantığı
 (function () {
-  const deckValues = ["0","½","1","2","3","5","8","13","21","?","☕"];
+  // Tema sistemi
+  const themes = {
+    poker: {
+      name: "Poker Kartları",
+      values: ["0","½","1","2","3","5","8","13","21","?","☕"],
+      displayNames: {
+        "0": "0", "½": "½", "1": "1", "2": "2", "3": "3", 
+        "5": "5", "8": "8", "13": "13", "21": "21", "?": "?", "☕": "☕"
+      },
+      cardClass: "poker",
+      hasSuits: true
+    },
+    tshirt: {
+      name: "T-Shirt Boyutları",
+      values: ["XS","S","M","L","XL","XXL","?","☕"],
+      displayNames: {
+        "XS": "XS", "S": "S", "M": "M", "L": "L", 
+        "XL": "XL", "XXL": "XXL", "?": "?", "☕": "☕"
+      },
+      cardClass: "tshirt",
+      hasSuits: false
+    },
+    time: {
+      name: "Saat",
+      values: ["30m","1h","2h","4h","8h","?","☕"],
+      displayNames: {
+        "30m": "30m", "1h": "1h", "2h": "2h", "4h": "4h", 
+        "8h": "8h", "?": "?", "☕": "☕"
+      },
+      cardClass: "time",
+      hasSuits: false
+    },
+    fruit: {
+      name: "Meyve",
+      values: ["🍎","🍌","🍊","🍇","🍓","?","☕"],
+      displayNames: {
+        "🍎": "🍎", "🍌": "🍌", "🍊": "🍊", "🍇": "🍇", 
+        "🍓": "🍓", "?": "?", "☕": "☕"
+      },
+      cardClass: "fruit",
+      hasSuits: false
+    },
+    animal: {
+      name: "Hayvan",
+      values: ["🐰","🐸","🐱","🐶","🐼","?","☕"],
+      displayNames: {
+        "🐰": "🐰", "🐸": "🐸", "🐱": "🐱", "🐶": "🐶", 
+        "🐼": "🐼", "?": "?", "☕": "☕"
+      },
+      cardClass: "animal",
+      hasSuits: false
+    },
+    color: {
+      name: "Renk",
+      values: ["🔴","🟢","🔵","🟡","🟣","?","☕"],
+      displayNames: {
+        "🔴": "🔴", "🟢": "🟢", "🔵": "🔵", "🟡": "🟡", 
+        "🟣": "🟣", "?": "?", "☕": "☕"
+      },
+      cardClass: "color",
+      hasSuits: false
+    }
+  };
+
+  // Varsayılan tema
+  let currentTheme = 'poker';
+  
+  // LocalStorage'dan tema tercihini yükle
+  const savedTheme = localStorage.getItem('scrumPokerTheme');
+  if (savedTheme && themes[savedTheme]) {
+    currentTheme = savedTheme;
+  }
+
+  const deckValues = themes[currentTheme].values;
   const deckEl = document.getElementById("deck");
   const userListEl = document.getElementById("userList");
   const statusEl = document.getElementById("status");
@@ -24,84 +97,74 @@
   let isReady = false; // Kullanıcı hazır mı?
   let readyVote = null; // Kaydedilen oy (hazır olduktan sonra)
 
-  // Kartları oluştur - Poker tarzı
-  deckValues.forEach(v => {
-    const btn = document.createElement("button");
-    btn.className = "card";
-    btn.setAttribute("data-value", v);
+  // Kartları oluştur - Tema sistemine uygun
+  function createDeck() {
+    // Mevcut kartları temizle
+    deckEl.innerHTML = '';
     
-    // Kart içeriğini poker kartı gibi göster
-    let displayText = v;
-    let cardClass = "";
-    let suit = "";
+    const theme = themes[currentTheme];
+    const values = theme.values;
     
-    if (v === "☕") {
-      displayText = "☕";
-      cardClass = "coffee-card";
-      suit = "coffee";
-    } else if (v === "?") {
-      displayText = "?";
-      cardClass = "question-card";
-      suit = "question";
-    } else if (v === "½") {
-      displayText = "½";
-      cardClass = "half-card";
-      suit = "half";
-    } else if (v === "0") {
-      displayText = "0";
-      cardClass = "zero-card";
-      suit = "zero";
-    } else {
-      // Sayısal değerler için poker kartı sembolleri
-      const suits = ["hearts", "diamonds", "clubs", "spades"];
-      const suitSymbols = ["♥", "♦", "♣", "♠"];
-      const randomSuitIndex = Math.floor(Math.random() * suits.length);
-      suit = suits[randomSuitIndex];
+    values.forEach(v => {
+      const btn = document.createElement("button");
+      btn.className = `card ${theme.cardClass}-card`;
+      btn.setAttribute("data-value", v);
       
-      // Kart içeriğini temizle
-      btn.innerHTML = "";
+      // Kart içeriğini tema'ya göre göster
+      let displayText = theme.displayNames[v] || v;
       
-      // Sembol ekle
-      const suitElement = document.createElement("div");
-      suitElement.className = "card-suit";
-      suitElement.textContent = suitSymbols[randomSuitIndex];
-      suitElement.setAttribute("data-suit", suit);
-      btn.appendChild(suitElement);
-      
-      // Değer ekle
-      const valueElement = document.createElement("div");
-      valueElement.className = "card-value";
-      valueElement.textContent = v;
-      valueElement.setAttribute("data-suit", suit);
-      btn.appendChild(valueElement);
-      
-      // Suit bilgisini kart elementine ekle
-      btn.setAttribute("data-suit", suit);
-    }
-    
-    // Özel kartlar için normal text
-    if (cardClass) {
-      btn.textContent = displayText;
-      btn.classList.add(cardClass);
-    }
-    
-    // Event listener'ları ekle
-    btn.addEventListener("click", () => {
-      selectCard(v, btn);
-    });
-    
-    // Klavye erişilebilirlik
-    btn.setAttribute("tabindex", "0");
-    btn.setAttribute("aria-label", `Kart ${v}`);
-    btn.addEventListener("keypress", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        selectCard(v, btn);
+      if (theme.hasSuits && v !== "☕" && v !== "?" && v !== "½" && v !== "0") {
+        // Poker kartları için suit ekle
+        const suits = ["hearts", "diamonds", "clubs", "spades"];
+        const suitSymbols = ["♥", "♦", "♣", "♠"];
+        const randomSuitIndex = Math.floor(Math.random() * suits.length);
+        const suit = suits[randomSuitIndex];
+        
+        // Kart içeriğini temizle
+        btn.innerHTML = "";
+        
+        // Sembol ekle
+        const suitElement = document.createElement("div");
+        suitElement.className = "card-suit";
+        suitElement.textContent = suitSymbols[randomSuitIndex];
+        suitElement.setAttribute("data-suit", suit);
+        btn.appendChild(suitElement);
+        
+        // Değer ekle
+        const valueElement = document.createElement("div");
+        valueElement.className = "card-value";
+        valueElement.textContent = v;
+        valueElement.setAttribute("data-suit", suit);
+        btn.appendChild(valueElement);
+        
+        // Suit bilgisini kart elementine ekle
+        btn.setAttribute("data-suit", suit);
+      } else {
+        // Diğer temalar için normal text
+        btn.textContent = displayText;
       }
+      
+      // Event listener'ları ekle
+      btn.addEventListener("click", () => {
+        selectCard(v, btn);
+      });
+      
+      // Klavye erişilebilirlik
+      btn.setAttribute("tabindex", "0");
+      btn.setAttribute("aria-label", `${theme.name} kartı ${displayText}`);
+      btn.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          selectCard(v, btn);
+        }
+      });
+      
+      // Kartı deck'e ekle
+      deckEl.appendChild(btn);
     });
-    
-    // Kartı deck'e ekle
-    deckEl.appendChild(btn);
-  });
+  }
+
+  // İlk yüklemede kartları oluştur
+  createDeck();
 
   // Event listener'ları ekle
   if (revealBtn) {
@@ -116,9 +179,18 @@
     });
   }
 
+  // Tema butonu event listener
+  const themeBtn = document.getElementById("themeBtn");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", () => {
+      openThemeModal();
+    });
+  }
+
   // Oda sahibi kontrolü
   function updateOwnerControls() {
     const taskInputContainer = document.querySelector('.task-input-container');
+    const themeBtn = document.getElementById('themeBtn');
     
     if (isRoomOwner) {
       // Oda sahibi ise tüm butonları göster
@@ -127,6 +199,7 @@
       if (taskInput) taskInput.style.display = "inline-block";
       if (taskSaveBtn) taskSaveBtn.style.display = "inline-block";
       if (taskInputContainer) taskInputContainer.style.display = "flex";
+      if (themeBtn) themeBtn.style.display = "inline-block";
     } else {
       // Oda sahibi değilse sadece oy verme butonlarını göster
       if (revealBtn) revealBtn.style.display = "none";
@@ -134,6 +207,7 @@
       if (taskInput) taskInput.style.display = "none";
       if (taskSaveBtn) taskSaveBtn.style.display = "none";
       if (taskInputContainer) taskInputContainer.style.display = "none";
+      if (themeBtn) themeBtn.style.display = "none";
     }
     
     // Hazır butonu herkes için görünür olsun
@@ -328,6 +402,7 @@
   // Sayfa yüklendiğinde hazır butonunu başlat
   document.addEventListener("DOMContentLoaded", () => {
     updateReadyButton();
+    setupThemeModal(); // Tema modal'ını başlat
   });
   
   // Odadan çık butonu
@@ -382,7 +457,7 @@
       }
     });
 
-    // Görev input alanına tıklayınca pop-up aç
+    // Görev input alanını gizle
     taskInput.addEventListener("click", () => {
       showTaskInputDialog();
     });
@@ -399,62 +474,149 @@
     }
   }
 
-  // Basit istatistikler
+  // Basit istatistikler - Tema sistemine uygun
   function calcStats(votes) {
-    const map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
-    const nums = Object.values(votes).map(v => map[v]).filter(v => typeof v === "number");
-    if (nums.length === 0) return "Geçerli oy yok.";
+    const theme = themes[currentTheme];
+    let map = {};
+    
+    // Tema'ya göre sayısal değerleri belirle
+    if (theme.cardClass === 'poker') {
+      map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+    } else if (theme.cardClass === 'tshirt') {
+      map = { "XS":0.5, "S":1, "M":2, "L":3, "XL":5, "XXL":8 };
+    } else if (theme.cardClass === 'time') {
+      map = { "30m":0.5, "1h":1, "2h":2, "4h":4, "8h":8 };
+    } else if (theme.cardClass === 'fruit') {
+      map = { "🍎":1, "🍌":2, "🍊":3, "🍇":5, "🍓":8 };
+    } else if (theme.cardClass === 'animal') {
+      map = { "🐰":1, "🐸":2, "🐱":3, "🐶":5, "🐼":8 };
+    } else if (theme.cardClass === 'color') {
+      map = { "🔴":1, "🟢":2, "🔵":3, "🟡":5, "🟣":8 };
+    } else {
+      // Varsayılan poker kartları
+      map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+    }
+    
+    // Tüm oyları işle - sayısal olanları ve özel kartları
+    const allVotes = Object.values(votes);
+    const numericalVotes = allVotes.map(v => map[v]).filter(v => typeof v === "number");
+    const specialVotes = allVotes.filter(v => !map[v] || v === "?" || v === "☕");
+    
+    // Eğer hiç sayısal oy yoksa, sadece özel kartlar varsa
+    if (numericalVotes.length === 0) {
+      if (specialVotes.length === 0) return "Geçerli oy yok.";
+      
+      const dist = {};
+      specialVotes.forEach(v => dist[v]=(dist[v]||0)+1);
+      const distText = Object.entries(dist).map(([k,c]) => {
+        if (k === "☕") return `${c} kişi mola istedi`;
+        if (k === "?") return `${c} kişi belirsiz`;
+        return `${c} kişi ${k}`;
+      }).join("\n");
+      
+      return `${distText}\n\n📊 Özet: Sadece özel kartlar`;
+    }
 
-    nums.sort((a,b)=>a-b);
-    const sum = nums.reduce((a,b)=>a+b,0);
-    const avg = sum / nums.length;
-    const mid = Math.floor(nums.length/2);
-    const median = nums.length % 2 ? nums[mid] : (nums[mid-1]+nums[mid])/2;
+    // Sayısal oylar için istatistikler
+    numericalVotes.sort((a,b)=>a-b);
+    const sum = numericalVotes.reduce((a,b)=>a+b,0);
+    const avg = sum / numericalVotes.length;
+    const mid = Math.floor(numericalVotes.length/2);
+    const median = numericalVotes.length % 2 ? numericalVotes[mid] : (numericalVotes[mid-1]+numericalVotes[mid])/2;
 
     const freq = {};
-    nums.forEach(n => freq[n]=(freq[n]||0)+1);
+    numericalVotes.forEach(n => freq[n]=(freq[n]||0)+1);
     const maxF = Math.max(...Object.values(freq));
     const mode = Object.keys(freq).filter(k => freq[k]==maxF).join(", ");
 
     const dist = {};
     Object.values(votes).forEach(v => dist[v]=(dist[v]||0)+1);
     
-    // Dağılımı daha anlaşılır hale getir
+    // Dağılımı tema'ya göre anlaşılır hale getir
     const distText = Object.entries(dist).map(([k,c]) => {
       if (k === "☕") return `${c} kişi mola istedi`;
-      if (k === "☕") return `${c} kişi mola istedi`;
       if (k === "?") return `${c} kişi belirsiz`;
-      if (k === "½") return `${c} kişi 0.5 puan`;
-      return `${c} kişi ${k} puan`;
+      
+      // Tema'ya göre açıklama
+      if (theme.cardClass === 'tshirt') {
+        return `${c} kişi ${k} boyut`;
+      } else if (theme.cardClass === 'time') {
+        return `${c} kişi ${k}`;
+      } else if (theme.cardClass === 'fruit') {
+        return `${c} kişi ${k}`;
+      } else if (theme.cardClass === 'animal') {
+        return `${c} kişi ${k}`;
+      } else if (theme.cardClass === 'color') {
+        return `${c} kişi ${k}`;
+      } else {
+        // Poker kartları
+        if (k === "½") return `${c} kişi 0.5 puan`;
+        return `${c} kişi ${k} puan`;
+      }
     }).join("\n");
 
-    return `${distText}
+    let summaryText = `📊 Özet: Ortalama ${avg.toFixed(1)} | Medyan ${median} | En çok ${mode}`;
+    
+    // Eğer özel kartlar da varsa, bunları da ekle
+    if (specialVotes.length > 0) {
+      summaryText += ` | ${specialVotes.length} özel kart`;
+    }
 
-📊 Özet: Ortalama ${avg.toFixed(1)} | Medyan ${median} | En çok ${mode}`;
+    return `${distText}\n\n${summaryText}`;
   }
   
-  // Detaylı istatistikler (pop-up için)
+  // Detaylı istatistikler (pop-up için) - Tema sistemine uygun
   function calculateDetailedStats(votes) {
-    const map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
-    const nums = Object.values(votes).map(v => map[v]).filter(v => typeof v === "number");
+    const theme = themes[currentTheme];
+    let map = {};
     
-    if (nums.length === 0) {
+    // Tema'ya göre sayısal değerleri belirle
+    if (theme.cardClass === 'poker') {
+      map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+    } else if (theme.cardClass === 'tshirt') {
+      map = { "XS":0.5, "S":1, "M":2, "L":3, "XL":5, "XXL":8 };
+    } else if (theme.cardClass === 'time') {
+      map = { "30m":0.5, "1h":1, "2h":2, "4h":4, "8h":8 };
+    } else if (theme.cardClass === 'fruit') {
+      map = { "🍎":1, "🍌":2, "🍊":3, "🍇":5, "🍓":8 };
+    } else if (theme.cardClass === 'animal') {
+      map = { "🐰":1, "🐸":2, "🐱":3, "🐶":5, "🐼":8 };
+    } else if (theme.cardClass === 'color') {
+      map = { "🔴":1, "🟢":2, "🔵":3, "🟡":5, "🟣":8 };
+    } else {
+      // Varsayılan poker kartları
+      map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+    }
+    
+    // Tüm oyları işle - sayısal olanları ve özel kartları
+    const allVotes = Object.values(votes);
+    const numericalVotes = allVotes.map(v => map[v]).filter(v => typeof v === "number");
+    const specialVotes = allVotes.filter(v => !map[v] || v === "?" || v === "☕");
+    
+    // Toplam oy sayısı (tüm oylar dahil)
+    const totalVotes = allVotes.length;
+    
+    // Eğer hiç sayısal oy yoksa, sadece özel kartlar varsa
+    if (numericalVotes.length === 0) {
       return {
         average: null,
         median: null,
         mode: [],
-        count: 0
+        count: totalVotes,
+        hasOnlySpecialVotes: true,
+        specialVotes: specialVotes
       };
     }
 
-    nums.sort((a,b)=>a-b);
-    const sum = nums.reduce((a,b)=>a+b,0);
-    const avg = sum / nums.length;
-    const mid = Math.floor(nums.length/2);
-    const median = nums.length % 2 ? nums[mid] : (nums[mid-1]+nums[mid])/2;
+    // Sayısal oylar için istatistikler
+    numericalVotes.sort((a,b)=>a-b);
+    const sum = numericalVotes.reduce((a,b)=>a+b,0);
+    const avg = sum / numericalVotes.length;
+    const mid = Math.floor(numericalVotes.length/2);
+    const median = numericalVotes.length % 2 ? numericalVotes[mid] : (numericalVotes[mid-1]+numericalVotes[mid])/2;
 
     const freq = {};
-    nums.forEach(n => freq[n]=(freq[n]||0)+1);
+    numericalVotes.forEach(n => freq[n]=(freq[n]||0)+1);
     const maxF = Math.max(...Object.values(freq));
     const mode = Object.keys(freq).filter(k => freq[k]==maxF);
 
@@ -462,12 +624,26 @@
       average: avg,
       median: median,
       mode: mode,
-      count: nums.length
+      count: totalVotes,
+      numericalCount: numericalVotes.length,
+      specialCount: specialVotes.length,
+      hasOnlySpecialVotes: false
     };
   }
 
   // UI'yi güncelle
   window.renderRoom = (state) => {
+    // Tema kontrolü - eğer state'de tema varsa ve farklıysa güncelle
+    if (state.theme && state.theme !== currentTheme) {
+      currentTheme = state.theme;
+      localStorage.setItem('scrumPokerTheme', currentTheme);
+      createDeck();
+      selectedCard = null;
+      isReady = false;
+      readyVote = null;
+      updateReadyButton();
+    }
+    
     const total = state.users.length;
     
     // Oy veren kullanıcıları tespit et
@@ -563,7 +739,27 @@
     let lowestUsers = [];
     
     if (state.revealed && state.votes) {
-      const map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+      const theme = themes[currentTheme];
+      let map = {};
+      
+      // Tema'ya göre sayısal değerleri belirle
+      if (theme.cardClass === 'poker') {
+        map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+      } else if (theme.cardClass === 'tshirt') {
+        map = { "XS":0.5, "S":1, "M":2, "L":3, "XL":5, "XXL":8 };
+      } else if (theme.cardClass === 'time') {
+        map = { "30m":0.5, "1h":1, "2h":2, "4h":4, "8h":8 };
+      } else if (theme.cardClass === 'fruit') {
+        map = { "🍎":1, "🍌":2, "🍊":3, "🍇":5, "🍓":8 };
+      } else if (theme.cardClass === 'animal') {
+        map = { "🐰":1, "🐸":2, "🐱":3, "🐶":5, "🐼":8 };
+      } else if (theme.cardClass === 'color') {
+        map = { "🔴":1, "🟢":2, "🔵":3, "🟡":5, "🟣":8 };
+      } else {
+        // Varsayılan poker kartları
+        map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+      }
+      
       const numericVotes = {};
       
       // Sadece sayısal oyları al
@@ -977,6 +1173,18 @@
       }
       
       try { window.renderRoom(ev.detail); } catch (e) {}
+      
+      // Tema değişikliği kontrolü
+      if (state.theme && state.theme !== currentTheme) {
+        currentTheme = state.theme;
+        localStorage.setItem('scrumPokerTheme', currentTheme);
+        createDeck();
+        selectedCard = null;
+        isReady = false;
+        readyVote = null;
+        updateReadyButton();
+        showInfoMessage(`${themes[currentTheme].name} teması oda sahibi tarafından seçildi!`);
+      }
     }
   });
   window.addEventListener("rt:history", (ev) => {
@@ -1120,22 +1328,39 @@
           <div class="stats-summary">
             <h5>📊 İstatistikler</h5>
             <div class="stats-grid">
-              <div class="stat-item">
-                <span class="stat-label">Ortalama:</span>
-                <span class="stat-value">${stats.average ? stats.average.toFixed(1) : 'N/A'}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">Medyan:</span>
-                <span class="stat-value">${stats.median || 'N/A'}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">En Çok:</span>
-                <span class="stat-value">${stats.mode ? stats.mode.join(', ') : 'N/A'}</span>
-              </div>
+              ${stats.hasOnlySpecialVotes ? `
+                <div class="stat-item">
+                  <span class="stat-label">Durum:</span>
+                  <span class="stat-value">Sadece özel kartlar</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Özel Kartlar:</span>
+                  <span class="stat-value">${stats.specialVotes ? stats.specialVotes.join(', ') : 'N/A'}</span>
+                </div>
+              ` : `
+                <div class="stat-item">
+                  <span class="stat-label">Ortalama:</span>
+                  <span class="stat-value">${stats.average ? stats.average.toFixed(1) : 'N/A'}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Medyan:</span>
+                  <span class="stat-value">${stats.median || 'N/A'}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">En Çok:</span>
+                  <span class="stat-value">${stats.mode ? stats.mode.join(', ') : 'N/A'}</span>
+                </div>
+              `}
               <div class="stat-item">
                 <span class="stat-label">Toplam Oy:</span>
                 <span class="stat-value">${stats.count || Object.keys(votes).length}</span>
               </div>
+              ${!stats.hasOnlySpecialVotes && stats.specialCount > 0 ? `
+                <div class="stat-item">
+                  <span class="stat-label">Özel Kartlar:</span>
+                  <span class="stat-value">${stats.specialCount} adet</span>
+                </div>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -2044,4 +2269,138 @@
   
   // Progress bar'ı güncelle
   updateTaskProgress();
+
+  // Tema değiştirme fonksiyonu
+  function changeTheme(newTheme) {
+    if (!themes[newTheme]) return;
+    
+    currentTheme = newTheme;
+    localStorage.setItem('scrumPokerTheme', newTheme);
+    
+    // Kartları yeniden oluştur
+    createDeck();
+    
+    // Seçili kartı temizle
+    selectedCard = null;
+    document.querySelectorAll('.card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    
+    // Hazır durumunu sıfırla
+    isReady = false;
+    readyVote = null;
+    
+    // Hazır butonunu güncelle
+    updateReadyButton();
+    
+    // Başarı mesajı göster
+    showSuccessMessage(`${themes[newTheme].name} teması uygulandı!`);
+    
+    // Tema modal'ını kapat
+    closeThemeModal();
+    
+    // Eğer oda sahibi ise, diğer kullanıcılara tema değişikliğini bildir
+    if (isRoomOwner && window.RT && window.RT.socket) {
+      // Socket.io event'ini emit et
+      if (window.RT.socket && window.RT.socket.emit) {
+        window.RT.socket.emit('themeChanged', { theme: newTheme });
+      }
+    }
+  }
+
+  // Tema modal'ını aç
+  function openThemeModal() {
+    const themeModal = document.getElementById('themeModal');
+    if (themeModal) {
+      themeModal.style.display = 'flex';
+      
+      // Mevcut temayı seçili göster
+      updateThemeSelection();
+      
+      // Body scroll'u engelle
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  // Tema modal'ını kapat
+  function closeThemeModal() {
+    const themeModal = document.getElementById('themeModal');
+    if (themeModal) {
+      themeModal.style.display = 'none';
+      
+      // Body scroll'u geri aç
+      document.body.style.overflow = 'auto';
+    }
+  }
+
+  // Tema seçimini güncelle
+  function updateThemeSelection() {
+    document.querySelectorAll('.theme-option').forEach(option => {
+      option.classList.remove('selected');
+      if (option.dataset.theme === currentTheme) {
+        option.classList.add('selected');
+      }
+    });
+  }
+
+  // Tema modal event listener'ları
+  function setupThemeModal() {
+    // Tema seçeneklerine tıklama olayı ekle
+    document.querySelectorAll('.theme-option').forEach(option => {
+      option.addEventListener('click', () => {
+        const theme = option.dataset.theme;
+        changeTheme(theme);
+      });
+    });
+    
+    // Modal kapatma butonları
+    const themeModalClose = document.getElementById('themeModalClose');
+    if (themeModalClose) {
+      themeModalClose.addEventListener('click', closeThemeModal);
+    }
+    
+    // Modal overlay'e tıklayınca kapat
+    const themeModalOverlay = document.querySelector('.theme-modal-overlay');
+    if (themeModalOverlay) {
+      themeModalOverlay.addEventListener('click', closeThemeModal);
+    }
+    
+    // ESC tuşu ile modal'ı kapat
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const themeModal = document.getElementById('themeModal');
+        if (themeModal && themeModal.style.display === 'flex') {
+          closeThemeModal();
+        }
+      }
+    });
+  }
+
+  // Tema değişikliği event listener'ı
+  window.addEventListener("rt:themeChanged", (event) => {
+    if (event && event.detail && event.detail.theme) {
+      const newTheme = event.detail.theme;
+      if (themes[newTheme] && newTheme !== currentTheme) {
+        currentTheme = newTheme;
+        localStorage.setItem('scrumPokerTheme', newTheme);
+        createDeck();
+        
+        // Seçili kartı temizle
+        selectedCard = null;
+        document.querySelectorAll('.card').forEach(card => {
+          card.classList.remove('selected');
+        });
+        
+        // Hazır durumunu sıfırla
+        isReady = false;
+        readyVote = null;
+        
+        // Hazır butonunu güncelle
+        updateReadyButton();
+        
+        // Bilgi mesajı göster
+        showInfoMessage(`${themes[newTheme].name} teması oda sahibi tarafından değiştirildi!`);
+      }
+    }
+  });
 })();

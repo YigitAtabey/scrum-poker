@@ -2700,3 +2700,302 @@ body {
     align-self: flex-end;
   }
 }
+
+/* ===== THEME MODAL STYLES ===== */
+
+.theme-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.theme-modal-content {
+  position: relative;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.theme-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+
+.theme-modal-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.theme-modal-icon {
+  font-size: 1.5rem;
+}
+
+.theme-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.theme-modal-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.theme-modal-body {
+  padding: var(--spacing-lg);
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.theme-option {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-option:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.theme-option.selected {
+  border-color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.theme-option.selected::before {
+  content: '✓';
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: var(--primary-color);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
+.theme-preview {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  min-height: 80px;
+}
+
+.preview-card {
+  width: 60px;
+  height: 80px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-weight: bold;
+}
+
+.preview-suit {
+  position: absolute;
+  top: var(--spacing-xs);
+  left: var(--spacing-xs);
+  font-size: 0.875rem;
+}
+
+.preview-value {
+  font-size: 1.25rem;
+}
+
+/* Theme-specific preview styles */
+.poker-preview .preview-card {
+  background: linear-gradient(135deg, #1e293b, #334155);
+  color: var(--text-primary);
+}
+
+.tshirt-preview .preview-card {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+}
+
+.time-preview .preview-card {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.fruit-preview .preview-card {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.animal-preview .preview-card {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+}
+
+.color-preview .preview-card {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.theme-info h4 {
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  text-align: center;
+}
+
+.theme-info p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-align: center;
+  margin: 0;
+}
+
+.theme-footer {
+  text-align: center;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.theme-hint {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .theme-modal-content {
+    width: 95%;
+    margin: var(--spacing-md);
+  }
+  
+  .theme-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .theme-option {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Tema kartları */
+.poker-card {
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  color: var(--text-primary);
+}
+
+.tshirt-card {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  font-weight: 800;
+}
+
+.time-card {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-weight: 800;
+}
+
+.fruit-card {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  font-weight: 800;
+}
+
+.animal-card {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  font-weight: 800;
+}
+
+.color-card {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  font-weight: 800;
+}
+
+/* Özel kartlar için tema desteği */
+.tshirt-card[data-value="?"],
+.time-card[data-value="?"],
+.fruit-card[data-value="?"],
+.animal-card[data-value="?"],
+.color-card[data-value="?"] {
+  background: linear-gradient(135deg, #6B46C1 0%, #8B5CF6 100%);
+}
+
+.tshirt-card[data-value="☕"],
+.time-card[data-value="☕"],
+.fruit-card[data-value="☕"],
+.animal-card[data-value="☕"],
+.color-card[data-value="☕"] {
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+}

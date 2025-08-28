@@ -58,6 +58,7 @@ window.RT = {
   me: { id: null, name: null },
   state: null,
   myVote: null, // reveal öncesi kendi seçimini hatırlamak için
+  socket: socket, // Socket referansını ekle
 
   join(roomId, name) {
     ROOM_ID = roomId;
@@ -223,7 +224,8 @@ socket.on("state", (incoming) => {
     votes: incoming.votes || {},
     voted: Array.isArray(incoming.voted) ? incoming.voted : Object.keys(incoming.votes || {}),
     voteCount: typeof incoming.voteCount === "number" ? incoming.voteCount : Object.keys(incoming.votes || {}).length,
-    owner: incoming.owner || null // Oda sahibi bilgisi
+    owner: incoming.owner || null, // Oda sahibi bilgisi
+    theme: incoming.theme || 'poker' // Oda teması
   };
 
   RT.state = state;
@@ -249,6 +251,13 @@ socket.on("state", (incoming) => {
   try {
     window.dispatchEvent(new CustomEvent("rt:state", { detail: state }));
   } catch {}
+  
+  // Tema değişikliği varsa custom event yayınla
+  if (incoming.theme && incoming.theme !== (RT.state?.theme || 'poker')) {
+    try {
+      window.dispatchEvent(new CustomEvent("rt:themeChanged", { detail: { theme: incoming.theme } }));
+    } catch {}
+  }
 });
 
 // History ayrı kanal
@@ -303,10 +312,12 @@ socket.on("chatMessage", (chatMessage) => {
   } catch {}
 });
 
-// Chat geçmişi alma
+// Chat geçmişi
 socket.on("chatHistory", (chatHistory) => {
-  // Custom event ile chat geçmişini yayınla
-  try {
-    window.dispatchEvent(new CustomEvent("rt:chatHistory", { detail: chatHistory }));
-  } catch {}
+  window.dispatchEvent(new CustomEvent("rt:chatHistory", { detail: chatHistory }));
+});
+
+// Tema değişikliği
+socket.on("themeChanged", (data) => {
+  window.dispatchEvent(new CustomEvent("rt:themeChanged", { detail: data }));
 });

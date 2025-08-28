@@ -60,7 +60,8 @@ function roomState(roomId, revealedOnly=false) {
     votes: r.revealed ? r.votes : {}, // reveal olmadan kimseye oyları göstermeyiz
     voted: Object.keys(r.votes), // Bu her zaman doğru oy sayısını verir
     voteCount: Object.keys(r.votes).length, // Bu her zaman doğru oy sayısını verir
-    owner: r.owner || null // Oda sahibinin socket ID'si
+    owner: r.owner || null, // Oda sahibinin socket ID'si
+    theme: r.theme || 'poker' // Oda teması
   };
   
   // Debug için console.log ekle
@@ -200,13 +201,45 @@ function getRecentActivities() {
 }
 
 function calcStatsFromVotes(votes) {
-  const map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+  // Tüm tema kartlarını destekle
+  const allMaps = {
+    // Poker kartları
+    poker: { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 },
+    // T-shirt boyutları
+    tshirt: { "XS":0.5, "S":1, "M":2, "L":3, "XL":5, "XXL":8 },
+    // Saat
+    time: { "30m":0.5, "1h":1, "2h":2, "4h":4, "8h":8 },
+    // Meyve
+    fruit: { "🍎":1, "🍌":2, "🍊":3, "🍇":5, "🍓":8 },
+    // Hayvan
+    animal: { "🐰":1, "🐸":2, "🐱":3, "🐶":5, "🐼":8 },
+    // Renk
+    color: { "🔴":1, "🟢":2, "🔵":3, "🟡":5, "🟣":8 }
+  };
+  
+  // Hangi temaya ait olduğunu tespit et
+  let detectedTheme = 'poker'; // Varsayılan
+  let currentMap = allMaps.poker;
+  
+  // Oy değerlerine bakarak temayı tespit et
+  const voteValues = Object.values(votes);
+  for (const [theme, map] of Object.entries(allMaps)) {
+    if (voteValues.some(vote => map[vote] !== undefined)) {
+      detectedTheme = theme;
+      currentMap = map;
+      break;
+    }
+  }
+  
+  // Sayısal oyları işle
   const nums = Object.values(votes)
-    .map((v) => map[v])
+    .map((v) => currentMap[v])
     .filter((v) => typeof v === "number");
+    
   if (nums.length === 0) {
     return { count: 0, distribution: {}, average: null, median: null, mode: null, summary: "Geçerli oy yok." };
   }
+  
   nums.sort((a,b) => a-b);
   const sum = nums.reduce((a,b)=>a+b,0);
   const average = sum / nums.length;
@@ -219,12 +252,27 @@ function calcStatsFromVotes(votes) {
   const dist = {};
   Object.values(votes).forEach(v => { dist[v] = (dist[v]||0)+1; });
   
-  // Dağılımı daha anlaşılır hale getir
+  // Dağılımı tema'ya göre anlaşılır hale getir
   const distText = Object.entries(dist).map(([k,c]) => {
     if (k === "☕") return `${c} kişi mola istedi`;
     if (k === "?") return `${c} kişi belirsiz`;
-    if (k === "½") return `${c} kişi 0.5 puan`;
-    return `${c} kişi ${k} puan`;
+    
+    // Tema'ya göre açıklama
+    if (detectedTheme === 'tshirt') {
+      return `${c} kişi ${k} boyut`;
+    } else if (detectedTheme === 'time') {
+      return `${c} kişi ${k}`;
+    } else if (detectedTheme === 'fruit') {
+      return `${c} kişi ${k}`;
+    } else if (detectedTheme === 'animal') {
+      return `${c} kişi ${k}`;
+    } else if (detectedTheme === 'color') {
+      return `${c} kişi ${k}`;
+    } else {
+      // Poker kartları
+      if (k === "½") return `${c} kişi 0.5 puan`;
+      return `${c} kişi ${k} puan`;
+    }
   }).join("\n");
   
   const summary = `${distText}
@@ -339,8 +387,23 @@ io.on("connection", (socket) => {
       return;
     }
 
-    const deck = ["0","½","1","2","3","5","8","13","21","?","☕"];
-    if (!deck.includes(card)) {
+    // Tüm tema kartlarını kabul et
+    const validCards = [
+      // Poker kartları
+      "0", "½", "1", "2", "3", "5", "8", "13", "21", "?", "☕",
+      // T-shirt boyutları
+      "XS", "S", "M", "L", "XL", "XXL",
+      // Saat
+      "30m", "1h", "2h", "4h", "8h",
+      // Meyve
+      "🍎", "🍌", "🍊", "🍇", "🍓",
+      // Hayvan
+      "🐰", "🐸", "🐱", "🐶", "🐼",
+      // Renk
+      "🔴", "🟢", "🔵", "🟡", "🟣"
+    ];
+    
+    if (!validCards.includes(card)) {
       if (typeof ack === "function") ack({ ok:false, reason: "Geçersiz kart." });
       return;
     }
@@ -565,6 +628,29 @@ io.on("connection", (socket) => {
     
     const chatHistory = rooms[roomId].chat || [];
     socket.emit("chatHistory", chatHistory);
+  });
+
+  // Tema değişikliği
+  socket.on("themeChanged", (data) => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    
+    // Sadece oda sahibi tema değiştirebilir
+    if (!isRoomOwner(roomId, socket.id)) {
+      console.log(`Non-owner user ${socket.id} tried to change theme in room ${roomId}`);
+      return;
+    }
+    
+    const { theme } = data;
+    if (!theme) return;
+    
+    // Temayı odaya kaydet
+    rooms[roomId].theme = theme;
+    
+    // Tüm kullanıcılara tema değişikliğini bildir
+    io.to(roomId).emit("themeChanged", { theme });
+    
+    console.log(`Theme changed to ${theme} in room ${roomId} by owner ${socket.id}`);
   });
 
   socket.on("disconnect", () => {
