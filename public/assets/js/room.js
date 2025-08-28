@@ -84,6 +84,8 @@
   const taskInput = document.getElementById("taskInput");
   const taskSaveBtn = document.getElementById("taskSaveBtn");
   const historyEl = document.getElementById("history");
+  const currentUsernameEl = document.getElementById("currentUsername");
+  const changeUsernameBtn = document.getElementById("changeUsernameBtn");
   
   // Kullanıcının yazdığı görev yazısını korumak için
   let userTypedTask = "";
@@ -483,15 +485,15 @@
     if (theme.cardClass === 'poker') {
       map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
     } else if (theme.cardClass === 'tshirt') {
-      map = { "XS":0.5, "S":1, "M":2, "L":3, "XL":5, "XXL":8 };
+      map = { "XXS":0.5, "XS":1, "S":2, "M":3, "L":5, "XL":8, "XXL":13, "XXXL":21 };
     } else if (theme.cardClass === 'time') {
-      map = { "30m":0.5, "1h":1, "2h":2, "4h":4, "8h":8 };
+      map = { "15m":0.25, "30m":0.5, "45m":0.75, "1h":1, "1.5h":1.5, "2h":2, "3h":3, "4h":4, "6h":6, "8h":8, "12h":12, "16h":16, "24h":24, "2d":48, "3d":72, "1w":168 };
     } else if (theme.cardClass === 'fruit') {
-      map = { "🍎":1, "🍌":2, "🍊":3, "🍇":5, "🍓":8 };
+      map = { "🍒":0.5, "🍎":1, "🍌":2, "🍊":3, "🍇":5, "🍓":8, "🍑":13, "🥭":21, "🥝":34, "🍍":55 };
     } else if (theme.cardClass === 'animal') {
-      map = { "🐰":1, "🐸":2, "🐱":3, "🐶":5, "🐼":8 };
+      map = { "🐛":0.5, "🐰":1, "🐸":2, "🐱":3, "🐶":5, "🐼":8, "🦊":13, "🐯":21, "🦁":34, "🐘":55 };
     } else if (theme.cardClass === 'color') {
-      map = { "🔴":1, "🟢":2, "🔵":3, "🟡":5, "🟣":8 };
+      map = { "⚪":0.5, "🔴":1, "🟢":2, "🔵":3, "🟡":5, "🟣":8, "🟠":13, "🟤":21, "⚫":34, "🌈":55 };
     } else {
       // Varsayılan poker kartları
       map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
@@ -527,7 +529,15 @@
     const freq = {};
     numericalVotes.forEach(n => freq[n]=(freq[n]||0)+1);
     const maxF = Math.max(...Object.values(freq));
-    const mode = Object.keys(freq).filter(k => freq[k]==maxF).join(", ");
+    const mode = Object.keys(freq).filter(k => freq[k]==maxF).map(Number);
+    
+    // Debug: Log mode calculation for calcStats
+    console.log('calcStats mode calculation debug:');
+    console.log('numericalVotes:', numericalVotes);
+    console.log('freq:', freq);
+    console.log('maxF:', maxF);
+    console.log('mode (before conversion):', Object.keys(freq).filter(k => freq[k]==maxF));
+    console.log('mode (after conversion):', mode);
 
     const dist = {};
     Object.values(votes).forEach(v => dist[v]=(dist[v]||0)+1);
@@ -555,7 +565,35 @@
       }
     }).join("\n");
 
-    let summaryText = `📊 Özet: Ortalama ${avg.toFixed(1)} | Medyan ${median} | En çok ${mode}`;
+    // Tema'ya göre görüntüleme değerlerini hesapla
+    let displayAverage = avg.toFixed(1);
+    let displayMedian = median;
+    let displayMode = mode;
+    
+    // Tema'ya göre sayısal değerleri tema değerlerine geri çevir
+    if (theme.cardClass === 'tshirt') {
+      displayAverage = convertNumericToTshirt(avg);
+      displayMedian = convertNumericToTshirt(median);
+      displayMode = mode.map(m => convertNumericToTshirt(m)).join(', ');
+    } else if (theme.cardClass === 'time') {
+      displayAverage = convertNumericToTime(avg);
+      displayMedian = convertNumericToTime(median);
+      displayMode = mode.map(m => convertNumericToTime(m)).join(', ');
+    } else if (theme.cardClass === 'fruit') {
+      displayAverage = convertNumericToFruit(avg);
+      displayMedian = convertNumericToFruit(median);
+      displayMode = mode.map(m => convertNumericToFruit(m)).join(', ');
+    } else if (theme.cardClass === 'animal') {
+      displayAverage = convertNumericToAnimal(avg);
+      displayMedian = convertNumericToAnimal(median);
+      displayMode = mode.map(m => convertNumericToAnimal(m)).join(', ');
+    } else if (theme.cardClass === 'color') {
+      displayAverage = convertNumericToColor(avg);
+      displayMedian = convertNumericToColor(median);
+      displayMode = mode.map(m => convertNumericToColor(m)).join(', ');
+    }
+    
+    let summaryText = `📊 Özet: Ortalama ${displayAverage} | Medyan ${displayMedian} | En çok ${displayMode}`;
     
     // Eğer özel kartlar da varsa, bunları da ekle
     if (specialVotes.length > 0) {
@@ -574,15 +612,15 @@
     if (theme.cardClass === 'poker') {
       map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
     } else if (theme.cardClass === 'tshirt') {
-      map = { "XS":0.5, "S":1, "M":2, "L":3, "XL":5, "XXL":8 };
+      map = { "XXS":0.5, "XS":1, "S":2, "M":3, "L":5, "XL":8, "XXL":13, "XXXL":21 };
     } else if (theme.cardClass === 'time') {
-      map = { "30m":0.5, "1h":1, "2h":2, "4h":4, "8h":8 };
+      map = { "15m":0.25, "30m":0.5, "45m":0.75, "1h":1, "1.5h":1.5, "2h":2, "3h":3, "4h":4, "6h":6, "8h":8, "12h":12, "16h":16, "24h":24, "2d":48, "3d":72, "1w":168 };
     } else if (theme.cardClass === 'fruit') {
-      map = { "🍎":1, "🍌":2, "🍊":3, "🍇":5, "🍓":8 };
+      map = { "🍒":0.5, "🍎":1, "🍌":2, "🍊":3, "🍇":5, "🍓":8, "🍑":13, "🥭":21, "🥝":34, "🍍":55 };
     } else if (theme.cardClass === 'animal') {
-      map = { "🐰":1, "🐸":2, "🐱":3, "🐶":5, "🐼":8 };
+      map = { "🐛":0.5, "🐰":1, "🐸":2, "🐱":3, "🐶":5, "🐼":8, "🦊":13, "🐯":21, "🦁":34, "🐘":55 };
     } else if (theme.cardClass === 'color') {
-      map = { "🔴":1, "🟢":2, "🔵":3, "🟡":5, "🟣":8 };
+      map = { "⚪":0.5, "🔴":1, "🟢":2, "🔵":3, "🟡":5, "🟣":8, "🟠":13, "🟤":21, "⚫":34, "🌈":55 };
     } else {
       // Varsayılan poker kartları
       map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
@@ -618,8 +656,44 @@
     const freq = {};
     numericalVotes.forEach(n => freq[n]=(freq[n]||0)+1);
     const maxF = Math.max(...Object.values(freq));
-    const mode = Object.keys(freq).filter(k => freq[k]==maxF);
+    const mode = Object.keys(freq).filter(k => freq[k]==maxF).map(Number);
+    
+    // Debug: Log mode calculation for calculateDetailedStats
+    console.log('calculateDetailedStats mode calculation debug:');
+    console.log('numericalVotes:', numericalVotes);
+    console.log('freq:', freq);
+    console.log('maxF:', maxF);
+    console.log('mode (before conversion):', Object.keys(freq).filter(k => freq[k]==maxF));
+    console.log('mode (after conversion):', mode);
 
+    // Tema'ya göre görüntüleme değerlerini hesapla
+    let displayAverage = avg;
+    let displayMedian = median;
+    let displayMode = mode;
+    
+    // Tema'ya göre sayısal değerleri tema değerlerine geri çevir
+    if (theme.cardClass === 'tshirt') {
+      displayAverage = convertNumericToTshirt(avg);
+      displayMedian = convertNumericToTshirt(median);
+      displayMode = mode.map(m => convertNumericToTshirt(parseFloat(m)));
+    } else if (theme.cardClass === 'time') {
+      displayAverage = convertNumericToTime(avg);
+      displayMedian = convertNumericToTime(median);
+      displayMode = mode.map(m => convertNumericToTime(parseFloat(m)));
+    } else if (theme.cardClass === 'fruit') {
+      displayAverage = convertNumericToFruit(avg);
+      displayMedian = convertNumericToFruit(median);
+      displayMode = mode.map(m => convertNumericToFruit(parseFloat(m)));
+    } else if (theme.cardClass === 'animal') {
+      displayAverage = convertNumericToAnimal(avg);
+      displayMedian = convertNumericToAnimal(median);
+      displayMode = mode.map(m => convertNumericToAnimal(parseFloat(m)));
+    } else if (theme.cardClass === 'color') {
+      displayAverage = convertNumericToColor(avg);
+      displayMedian = convertNumericToColor(median);
+      displayMode = mode.map(m => convertNumericToColor(parseFloat(m)));
+    }
+    
     return {
       average: avg,
       median: median,
@@ -627,10 +701,138 @@
       count: totalVotes,
       numericalCount: numericalVotes.length,
       specialCount: specialVotes.length,
-      hasOnlySpecialVotes: false
+      hasOnlySpecialVotes: false,
+      displayAverage,
+      displayMedian,
+      displayMode
     };
+    }
+  
+  // T-shirt boyutları için sayısal değeri boyuta geri çevir
+  function convertNumericToTshirt(numericValue) {
+    const tshirtMap = { 0.5: "XXS", 1: "XS", 2: "S", 3: "M", 5: "L", 8: "XL", 13: "XXL", 21: "XXXL" };
+    
+    // Eğer tam eşleşme varsa onu döndür
+    if (tshirtMap[numericValue] !== undefined) {
+      return tshirtMap[numericValue];
+    }
+    
+    // En yakın T-shirt boyutunu bul
+    const sizes = Object.keys(tshirtMap).map(Number).sort((a, b) => a - b);
+    let closestSize = sizes[0];
+    let minDifference = Math.abs(numericValue - closestSize);
+    
+    for (const size of sizes) {
+      const difference = Math.abs(numericValue - size);
+      if (difference < minDifference) {
+        minDifference = difference;
+        closestSize = size;
+      }
+    }
+    
+    return tshirtMap[closestSize];
   }
 
+  // Saat için sayısal değeri saate geri çevir
+  function convertNumericToTime(numericValue) {
+    const timeMap = { 0.25: "15m", 0.5: "30m", 0.75: "45m", 1: "1h", 1.5: "1.5h", 2: "2h", 3: "3h", 4: "4h", 6: "6h", 8: "8h", 12: "12h", 16: "16h", 24: "24h", 48: "2d", 72: "3d", 168: "1w" };
+    
+    // Eğer tam eşleşme varsa onu döndür
+    if (timeMap[numericValue] !== undefined) {
+      return timeMap[numericValue];
+    }
+    
+    // En yakın zaman değerini bul
+    const times = Object.keys(timeMap).map(Number).sort((a, b) => a - b);
+    let closestTime = times[0];
+    let minDifference = Math.abs(numericValue - closestTime);
+    
+    for (const time of times) {
+      const difference = Math.abs(numericValue - time);
+      if (difference < minDifference) {
+        minDifference = difference;
+        closestTime = time;
+      }
+    }
+    
+    return timeMap[closestTime];
+  }
+
+  // Meyve için sayısal değeri meyveye geri çevir
+  function convertNumericToFruit(numericValue) {
+    const fruitMap = { 0.5: "🍒", 1: "🍎", 2: "🍌", 3: "🍊", 5: "🍇", 8: "🍓", 13: "🍑", 21: "🥭", 34: "🥝", 55: "🍍" };
+    
+    // Eğer tam eşleşme varsa onu döndür
+    if (fruitMap[numericValue] !== undefined) {
+      return fruitMap[numericValue];
+    }
+    
+    // En yakın meyve değerini bul
+    const fruits = Object.keys(fruitMap).map(Number).sort((a, b) => a - b);
+    let closestFruit = fruits[0];
+    let minDifference = Math.abs(numericValue - closestFruit);
+    
+    for (const fruit of fruits) {
+      const difference = Math.abs(numericValue - fruit);
+      if (difference < minDifference) {
+        minDifference = difference;
+        closestFruit = fruit;
+      }
+    }
+    
+    return fruitMap[closestFruit];
+  }
+
+  // Hayvan için sayısal değeri hayvana geri çevir
+  function convertNumericToAnimal(numericValue) {
+    const animalMap = { 0.5: "🐛", 1: "🐰", 2: "🐸", 3: "🐱", 5: "🐶", 8: "🐼", 13: "🦊", 21: "🐯", 34: "🦁", 55: "🐘" };
+    
+    // Eğer tam eşleşme varsa onu döndür
+    if (animalMap[numericValue] !== undefined) {
+      return animalMap[numericValue];
+    }
+    
+    // En yakın hayvan değerini bul
+    const animals = Object.keys(animalMap).map(Number).sort((a, b) => a - b);
+    let closestAnimal = animals[0];
+    let minDifference = Math.abs(numericValue - closestAnimal);
+    
+    for (const animal of animals) {
+      const difference = Math.abs(numericValue - animal);
+      if (difference < minDifference) {
+        minDifference = difference;
+        closestAnimal = animal;
+      }
+    }
+    
+    return animalMap[closestAnimal];
+  }
+
+  // Renk için sayısal değeri renge geri çevir
+  function convertNumericToColor(numericValue) {
+    const colorMap = { 0.5: "⚪", 1: "🔴", 2: "🟢", 3: "🔵", 5: "🟡", 8: "🟣", 13: "🟠", 21: "🟤", 34: "⚫", 55: "🌈" };
+    
+    // Eğer tam eşleşme varsa onu döndür
+    if (colorMap[numericValue] !== undefined) {
+      return colorMap[numericValue];
+    }
+    
+    // En yakın renk değerini bul
+    const colors = Object.keys(colorMap).map(Number).sort((a, b) => a - b);
+    let closestColor = colors[0];
+    let minDifference = Math.abs(numericValue - closestColor);
+    
+    for (const color of colors) {
+      const difference = Math.abs(numericValue - color);
+      if (difference < minDifference) {
+        minDifference = difference;
+        closestColor = color;
+      }
+    }
+    
+    return colorMap[closestColor];
+  }
+  
   // UI'yi güncelle
   window.renderRoom = (state) => {
     // Tema kontrolü - eğer state'de tema varsa ve farklıysa güncelle
@@ -742,19 +944,19 @@
       const theme = themes[currentTheme];
       let map = {};
       
-      // Tema'ya göre sayısal değerleri belirle
+      // Tema'ya göre sayısal değerleri belirle - tüm temalar için kapsamlı mapping
       if (theme.cardClass === 'poker') {
-        map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
+        map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21, "34":34, "55":55, "89":89 };
       } else if (theme.cardClass === 'tshirt') {
-        map = { "XS":0.5, "S":1, "M":2, "L":3, "XL":5, "XXL":8 };
+        map = { "XXS":0.5, "XS":1, "S":2, "M":3, "L":5, "XL":8, "XXL":13, "XXXL":21 };
       } else if (theme.cardClass === 'time') {
-        map = { "30m":0.5, "1h":1, "2h":2, "4h":4, "8h":8 };
+        map = { "15m":0.25, "30m":0.5, "45m":0.75, "1h":1, "1.5h":1.5, "2h":2, "3h":3, "4h":4, "6h":6, "8h":8, "12h":12, "16h":16, "24h":24, "2d":48, "3d":72, "1w":168 };
       } else if (theme.cardClass === 'fruit') {
-        map = { "🍎":1, "🍌":2, "🍊":3, "🍇":5, "🍓":8 };
+        map = { "🍒":0.5, "🍎":1, "🍌":2, "🍊":3, "🍇":5, "🍓":8, "🍑":13, "🥭":21, "🥝":34, "🍍":55 };
       } else if (theme.cardClass === 'animal') {
-        map = { "🐰":1, "🐸":2, "🐱":3, "🐶":5, "🐼":8 };
+        map = { "🐛":0.5, "🐰":1, "🐸":2, "🐱":3, "🐶":5, "🐼":8, "🦊":13, "🐯":21, "🦁":34, "🐘":55 };
       } else if (theme.cardClass === 'color') {
-        map = { "🔴":1, "🟢":2, "🔵":3, "🟡":5, "🟣":8 };
+        map = { "⚪":0.5, "🔴":1, "🟢":2, "🔵":3, "🟡":5, "🟣":8, "🟠":13, "🟤":21, "⚫":34, "🌈":55 };
       } else {
         // Varsayılan poker kartları
         map = { "0":0, "½":0.5, "1":1, "2":2, "3":3, "5":5, "8":8, "13":13, "21":21 };
@@ -762,9 +964,9 @@
       
       const numericVotes = {};
       
-      // Sadece sayısal oyları al
+      // Sadece sayısal oyları al (?, ☕ gibi özel kartları hariç tut)
       Object.entries(state.votes).forEach(([userId, vote]) => {
-        if (map[vote] !== undefined) {
+        if (map[vote] !== undefined && vote !== "?" && vote !== "☕") {
           numericVotes[userId] = map[vote];
         }
       });
@@ -782,6 +984,18 @@
           if (value === lowestVote) {
             lowestUsers.push(userId);
           }
+        });
+        
+        // Debug için log
+        console.log("🔍 En yüksek/en düşük oy hesaplaması:", {
+          theme: currentTheme,
+          map: map,
+          votes: state.votes,
+          numericVotes: numericVotes,
+          highestVote: highestVote,
+          lowestVote: lowestVote,
+          highestUsers: highestUsers,
+          lowestUsers: lowestUsers
         });
       }
     }
@@ -1340,15 +1554,15 @@
               ` : `
                 <div class="stat-item">
                   <span class="stat-label">Ortalama:</span>
-                  <span class="stat-value">${stats.average ? stats.average.toFixed(1) : 'N/A'}</span>
+                  <span class="stat-value">${stats.displayAverage !== undefined ? stats.displayAverage : (stats.average ? stats.average.toFixed(1) : 'N/A')}</span>
                 </div>
                 <div class="stat-item">
                   <span class="stat-label">Medyan:</span>
-                  <span class="stat-value">${stats.median || 'N/A'}</span>
+                  <span class="stat-value">${stats.displayMedian !== undefined ? stats.displayMedian : (stats.median || 'N/A')}</span>
                 </div>
                 <div class="stat-item">
                   <span class="stat-label">En Çok:</span>
-                  <span class="stat-value">${stats.mode ? stats.mode.join(', ') : 'N/A'}</span>
+                  <span class="stat-value">${stats.displayMode && stats.displayMode.length > 0 ? stats.displayMode.join(', ') : (stats.mode ? stats.mode.join(', ') : 'N/A')}</span>
                 </div>
               `}
               <div class="stat-item">
@@ -2167,7 +2381,12 @@
       const scoreDiv = document.createElement('div');
       if (item.stats && item.stats.average !== null) {
         scoreDiv.className = 'history-score';
-        scoreDiv.textContent = item.stats.average.toFixed(1);
+        // Tema'ya göre skoru göster
+        if (item.stats.displayAverage !== undefined) {
+          scoreDiv.textContent = item.stats.displayAverage;
+        } else {
+          scoreDiv.textContent = item.stats.average.toFixed(1);
+        }
       } else {
         scoreDiv.className = 'history-score';
         scoreDiv.textContent = '-';
@@ -2209,9 +2428,10 @@
         if (item.stats.median !== null && item.stats.median !== undefined) {
           const statDiv = document.createElement('div');
           statDiv.className = 'history-stat';
+          const medianValue = item.stats.displayMedian !== undefined ? item.stats.displayMedian : item.stats.median;
           statDiv.innerHTML = `
             <span class="history-stat-label">Medyan</span>
-            <span class="history-stat-value">${item.stats.median}</span>
+            <span class="history-stat-value">${medianValue}</span>
           `;
           statsDiv.appendChild(statDiv);
         }
@@ -2220,9 +2440,10 @@
         if (item.stats.mode && item.stats.mode.length > 0) {
           const statDiv = document.createElement('div');
           statDiv.className = 'history-stat';
+          const modeValue = item.stats.displayMode && item.stats.displayMode.length > 0 ? item.stats.displayMode.join(', ') : item.stats.mode.join(', ');
           statDiv.innerHTML = `
             <span class="history-stat-label">En Çok</span>
-            <span class="history-stat-value">${item.stats.mode.join(', ')}</span>
+            <span class="history-stat-value">${modeValue}</span>
           `;
           statsDiv.appendChild(statDiv);
         }
@@ -2403,4 +2624,59 @@
       }
     }
   });
+  
+  // Kullanıcı adı değiştirme fonksiyonu
+  function showUsernameChangeModal() {
+    const currentName = localStorage.getItem("username") || "";
+    
+    Swal.fire({
+      title: "✏️ Kullanıcı Adını Değiştir",
+      input: "text",
+      inputValue: currentName,
+      inputPlaceholder: "Yeni kullanıcı adınızı girin",
+      inputValidator: (value) => {
+        if (!value || !value.trim()) {
+          return "Kullanıcı adı boş olamaz!";
+        }
+        if (value.trim().length < 2) {
+          return "Kullanıcı adı en az 2 karakter olmalıdır!";
+        }
+      },
+      showCancelButton: true,
+      confirmButtonText: "Değiştir",
+      cancelButtonText: "İptal",
+      showLoaderOnConfirm: true,
+      preConfirm: (newUsername) => {
+        const trimmed = newUsername.trim();
+        if (trimmed && trimmed.length >= 2) {
+          localStorage.setItem("username", trimmed);
+          if (currentUsernameEl) {
+            currentUsernameEl.textContent = trimmed;
+          }
+          return trimmed;
+        }
+        return false;
+      }
+    }).then((result) => {
+      if (result.isConfirmed && result.value) {
+        showInfoMessage(`Kullanıcı adınız "${result.value}" olarak değiştirildi!`);
+        
+        // Sunucuya yeni kullanıcı adını bildir
+        if (window.RT && window.RT.socket) {
+          window.RT.socket.emit("usernameChanged", { newUsername: result.value });
+        }
+      }
+    });
+  }
+  
+  // Mevcut kullanıcı adını göster
+  function updateCurrentUsername() {
+    const username = localStorage.getItem("username") || "";
+    if (currentUsernameEl && username) {
+      currentUsernameEl.textContent = username;
+    }
+  }
+  
+  // Sayfa yüklendiğinde kullanıcı adını güncelle
+  updateCurrentUsername();
 })();

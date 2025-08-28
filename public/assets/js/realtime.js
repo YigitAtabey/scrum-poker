@@ -272,14 +272,12 @@ socket.on("history", (history) => {
 
 // Sayfa açılışı: odaya gir
 window.addEventListener("DOMContentLoaded", () => {
+  console.log("DOMContentLoaded event fired");
+  
   const roomId = getQuery("room");
-  const name = getUsername();
+  
+  console.log("Room ID:", roomId);
 
-  if (!name) {
-    showMsg("Kullanıcı adı bulunamadı. Ana sayfadan giriş yap.", "error");
-    window.location.href = "index.html";
-    return;
-  }
   if (!roomId) {
     showMsg("Oda kodu geçersiz.", "error");
     window.location.href = "index.html";
@@ -287,12 +285,126 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   document.getElementById("roomId").textContent = roomId;
-  RT.join(roomId, name);
+
+  // Ana sayfadan gelen mi yoksa linkle gelen mi kontrol et
+  const referrer = document.referrer;
+  const isFromMainPage = referrer && (referrer.includes('index.html') || referrer.includes('localhost:3001') || referrer.includes('127.0.0.1:3001'));
   
-  // Chat geçmişini yükle
+  console.log("Referrer:", referrer);
+  console.log("Is from main page:", isFromMainPage);
+  
+  if (isFromMainPage) {
+    // Ana sayfadan gelen - localStorage'daki kullanıcı adıyla direkt katıl
+    const username = getUsername();
+    if (username) {
+      console.log("From main page, joining with username:", username);
+      RT.join(roomId, username);
+      
+      // Chat geçmişini yükle
+      setTimeout(() => {
+        socket.emit("getChatHistory");
+      }, 1000);
+    } else {
+      // Kullanıcı adı yoksa modal göster
+      console.log("No username found, showing username modal");
+      showUsernameModal(roomId);
+    }
+  } else {
+    // Linkle gelen - her zaman kullanıcı adı modal'ını göster
+    console.log("From link, showing username modal");
+    showUsernameModal(roomId);
+  }
+});
+
+// Kullanıcı adı modal'ını göster
+function showUsernameModal(roomId) {
+  const modal = document.getElementById("usernameModal");
+  const form = document.getElementById("usernameForm");
+  const input = document.getElementById("usernameInput");
+  
+  if (!modal || !form || !input) {
+    console.error("Username modal elements not found");
+    return;
+  }
+  
+  console.log("Showing username modal for room:", roomId);
+  
+  // Modal'ı göster
+  modal.style.display = "flex";
+  
+  // Oda ID'sini modal'da göster
+  const modalRoomId = document.getElementById("modalRoomId");
+  if (modalRoomId) {
+    modalRoomId.textContent = roomId.toUpperCase();
+  }
+  
+  // Body scroll'u engelle
+  document.body.style.overflow = "hidden";
+  
+  // Input'a focus
   setTimeout(() => {
-    socket.emit("getChatHistory");
-  }, 1000);
+    input.focus();
+  }, 100);
+  
+      // Form submit handler
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      
+      const username = input.value.trim();
+      if (!username) {
+        input.focus();
+        return;
+      }
+      
+      // Submit butonunu devre dışı bırak
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="btn-icon">⏳</span> Katılıyor...';
+      }
+      
+      // Kullanıcı adını localStorage'a kaydet
+      localStorage.setItem("username", username);
+      
+      // Modal'ı gizle
+      hideUsernameModal();
+      
+      // Odaya katıl
+      RT.join(roomId, username);
+      
+      // Chat geçmişini yükle
+      setTimeout(() => {
+        socket.emit("getChatHistory");
+      }, 1000);
+    };
+  
+  // Enter tuşu ile submit
+  input.onkeydown = (e) => {
+    if (e.key === "Enter") {
+      form.dispatchEvent(new Event("submit"));
+    }
+  };
+}
+
+// Kullanıcı adı modal'ını gizle
+function hideUsernameModal() {
+  const modal = document.getElementById("usernameModal");
+  if (modal) {
+    modal.style.display = "none";
+    // Body scroll'u geri aç
+    document.body.style.overflow = "auto";
+    console.log("Username modal hidden");
+  }
+}
+
+// ESC tuşu ile modal'ı kapat
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const modal = document.getElementById("usernameModal");
+    if (modal && modal.style.display === "flex") {
+      hideUsernameModal();
+    }
+  }
 });
 
 // ===== CHAT FUNCTIONS =====

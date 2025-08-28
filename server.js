@@ -237,7 +237,18 @@ function calcStatsFromVotes(votes) {
     .filter((v) => typeof v === "number");
     
   if (nums.length === 0) {
-    return { count: 0, distribution: {}, average: null, median: null, mode: null, summary: "Geçerli oy yok." };
+    return { 
+      count: 0, 
+      distribution: {}, 
+      average: null, 
+      median: null, 
+      mode: null, 
+      summary: "Geçerli oy yok.",
+      theme: detectedTheme,
+      displayAverage: null,
+      displayMedian: null,
+      displayMode: []
+    };
   }
   
   nums.sort((a,b) => a-b);
@@ -249,8 +260,48 @@ function calcStatsFromVotes(votes) {
   nums.forEach(n => { freq[n] = (freq[n]||0)+1; });
   const maxF = Math.max(...Object.values(freq));
   const mode = Object.keys(freq).filter(k => Number(freq[k]) === maxF).map(Number);
+  
+  // Debug: Log mode calculation
+  console.log('Mode calculation debug:');
+  console.log('nums:', nums);
+  console.log('freq:', freq);
+  console.log('maxF:', maxF);
+  console.log('mode (before conversion):', Object.keys(freq).filter(k => Number(freq[k]) === maxF));
+  console.log('mode (after conversion):', mode);
   const dist = {};
   Object.values(votes).forEach(v => { dist[v] = (dist[v]||0)+1; });
+  
+  // Tema'ya göre görüntüleme değerlerini hesapla
+  let displayAverage = average;
+  let displayMedian = median;
+  let displayMode = mode;
+  
+  if (detectedTheme === 'tshirt') {
+    // T-shirt boyutları için sayısal değerleri boyutlara geri çevir
+    displayAverage = convertNumericToTshirt(average);
+    displayMedian = convertNumericToTshirt(median);
+    displayMode = mode.map(m => convertNumericToTshirt(m));
+  } else if (detectedTheme === 'time') {
+    // Saat için sayısal değerleri saatlere geri çevir
+    displayAverage = convertNumericToTime(average);
+    displayMedian = convertNumericToTime(median);
+    displayMode = mode.map(m => convertNumericToTime(m));
+  } else if (detectedTheme === 'fruit') {
+    // Meyve için sayısal değerleri meyvelere geri çevir
+    displayAverage = convertNumericToFruit(average);
+    displayMedian = convertNumericToFruit(median);
+    displayMode = mode.map(m => convertNumericToFruit(m));
+  } else if (detectedTheme === 'animal') {
+    // Hayvan için sayısal değerleri hayvanlara geri çevir
+    displayAverage = convertNumericToAnimal(average);
+    displayMedian = convertNumericToAnimal(median);
+    displayMode = mode.map(m => convertNumericToAnimal(m));
+  } else if (detectedTheme === 'color') {
+    // Renk için sayısal değerleri renklere geri çevir
+    displayAverage = convertNumericToColor(average);
+    displayMedian = convertNumericToColor(median);
+    displayMode = mode.map(m => convertNumericToColor(m));
+  }
   
   // Dağılımı tema'ya göre anlaşılır hale getir
   const distText = Object.entries(dist).map(([k,c]) => {
@@ -277,8 +328,200 @@ function calcStatsFromVotes(votes) {
   
   const summary = `${distText}
 
-📊 Özet: Ortalama ${average.toFixed(1)} | Medyan ${median} | En çok ${mode.join(", ")}`;
-  return { count: nums.length, distribution: dist, average, median, mode, summary };
+📊 Özet: Ortalama ${displayAverage} | Medyan ${displayMedian} | En çok ${displayMode.join(", ")}`;
+  
+  return { 
+    count: nums.length, 
+    distribution: dist, 
+    average, 
+    median, 
+    mode, 
+    summary,
+    theme: detectedTheme,
+    displayAverage,
+    displayMedian,
+    displayMode
+  };
+}
+
+// T-shirt boyutları için sayısal değeri boyuta geri çevir
+function convertNumericToTshirt(numericValue) {
+  const tshirtMap = { 0.5: "XXS", 1: "XS", 2: "S", 3: "M", 5: "L", 8: "XL", 13: "XXL", 21: "XXXL" };
+  
+  // Eğer tam eşleşme varsa onu döndür
+  if (tshirtMap[numericValue] !== undefined) {
+    return tshirtMap[numericValue];
+  }
+  
+  // En yakın T-shirt boyutunu bul
+  const sizes = Object.keys(tshirtMap).map(Number).sort((a, b) => a - b);
+  let closestSize = sizes[0];
+  let minDifference = Math.abs(numericValue - closestSize);
+  
+  for (const size of sizes) {
+    const difference = Math.abs(numericValue - size);
+    if (difference < minDifference) {
+      minDifference = difference;
+      closestSize = size;
+    }
+  }
+  
+  // Eğer birden fazla aynı farkta değer varsa, sayısal olarak daha yakın olanı seç
+  if (minDifference > 0) {
+    const sameDifferenceSizes = sizes.filter(size => Math.abs(numericValue - size) === minDifference);
+    if (sameDifferenceSizes.length > 1) {
+      // Sayısal olarak en yakın olanı bul
+      closestSize = sameDifferenceSizes.reduce((closest, current) => {
+        return Math.abs(numericValue - current) < Math.abs(numericValue - closest) ? current : closest;
+      });
+    }
+  }
+  
+  return tshirtMap[closestSize];
+}
+
+// Saat için sayısal değeri saate geri çevir
+function convertNumericToTime(numericValue) {
+  const timeMap = { 0.25: "15m", 0.5: "30m", 0.75: "45m", 1: "1h", 1.5: "1.5h", 2: "2h", 3: "3h", 4: "4h", 6: "6h", 8: "8h", 12: "12h", 16: "16h", 24: "24h", 48: "2d", 72: "3d", 168: "1w" };
+  
+  // Eğer tam eşleşme varsa onu döndür
+  if (timeMap[numericValue] !== undefined) {
+    return timeMap[numericValue];
+  }
+  
+  // En yakın zaman değerini bul
+  const times = Object.keys(timeMap).map(Number).sort((a, b) => a - b);
+  let closestTime = times[0];
+  let minDifference = Math.abs(numericValue - closestTime);
+  
+  for (const time of times) {
+    const difference = Math.abs(numericValue - time);
+    if (difference < minDifference) {
+      minDifference = difference;
+      closestTime = time;
+    }
+  }
+  
+  // Eğer birden fazla aynı farkta değer varsa, sayısal olarak daha yakın olanı seç
+  if (minDifference > 0) {
+    const sameDifferenceTimes = times.filter(time => Math.abs(numericValue - time) === minDifference);
+    if (sameDifferenceTimes.length > 1) {
+      // Sayısal olarak en yakın olanı bul
+      closestTime = sameDifferenceTimes.reduce((closest, current) => {
+        return Math.abs(numericValue - current) < Math.abs(numericValue - closest) ? current : closest;
+      });
+    }
+  }
+  
+  return timeMap[closestTime];
+}
+
+// Meyve için sayısal değeri meyveye geri çevir
+function convertNumericToFruit(numericValue) {
+  const fruitMap = { 0.5: "🍒", 1: "🍎", 2: "🍌", 3: "🍊", 5: "🍇", 8: "🍓", 13: "🍑", 21: "🥭", 34: "🥝", 55: "🍍" };
+  
+  // Eğer tam eşleşme varsa onu döndür
+  if (fruitMap[numericValue] !== undefined) {
+    return fruitMap[numericValue];
+  }
+  
+  // En yakın meyve değerini bul
+  const fruits = Object.keys(fruitMap).map(Number).sort((a, b) => a - b);
+  let closestFruit = fruits[0];
+  let minDifference = Math.abs(numericValue - closestFruit);
+  
+  for (const fruit of fruits) {
+    const difference = Math.abs(numericValue - fruit);
+    if (difference < minDifference) {
+      minDifference = difference;
+      closestFruit = fruit;
+    }
+  }
+  
+  // Eğer birden fazla aynı farkta değer varsa, sayısal olarak daha yakın olanı seç
+  if (minDifference > 0) {
+    const sameDifferenceFruits = fruits.filter(fruit => Math.abs(numericValue - fruit) === minDifference);
+    if (sameDifferenceFruits.length > 1) {
+      // Sayısal olarak en yakın olanı bul
+      closestFruit = sameDifferenceFruits.reduce((closest, current) => {
+        return Math.abs(numericValue - current) < Math.abs(numericValue - closest) ? current : closest;
+      });
+    }
+  }
+  
+  return fruitMap[closestFruit];
+}
+
+// Hayvan için sayısal değeri hayvana geri çevir
+function convertNumericToAnimal(numericValue) {
+  const animalMap = { 0.5: "🐛", 1: "🐰", 2: "🐸", 3: "🐱", 5: "🐶", 8: "🐼", 13: "🦊", 21: "🐯", 34: "🦁", 55: "🐘" };
+  
+  // Eğer tam eşleşme varsa onu döndür
+  if (animalMap[numericValue] !== undefined) {
+    return animalMap[numericValue];
+  }
+  
+  // En yakın hayvan değerini bul
+  const animals = Object.keys(animalMap).map(Number).sort((a, b) => a - b);
+  let closestAnimal = animals[0];
+  let minDifference = Math.abs(numericValue - closestAnimal);
+  
+  for (const animal of animals) {
+    const difference = Math.abs(numericValue - animal);
+    if (difference < minDifference) {
+      minDifference = difference;
+      closestAnimal = animal;
+    }
+  }
+  
+  // Eğer birden fazla aynı farkta değer varsa, sayısal olarak daha yakın olanı seç
+  if (minDifference > 0) {
+    const sameDifferenceAnimals = animals.filter(animal => Math.abs(numericValue - animal) === minDifference);
+    if (sameDifferenceAnimals.length > 1) {
+      // Sayısal olarak en yakın olanı bul
+      closestAnimal = sameDifferenceAnimals.reduce((closest, current) => {
+        return Math.abs(numericValue - current) < Math.abs(numericValue - closest) ? current : closest;
+      });
+    }
+  }
+  
+  return animalMap[closestAnimal];
+}
+
+// Renk için sayısal değeri renge geri çevir
+function convertNumericToColor(numericValue) {
+  const colorMap = { 0.5: "⚪", 1: "🔴", 2: "🟢", 3: "🔵", 5: "🟡", 8: "🟣", 13: "🟠", 21: "🟤", 34: "⚫", 55: "🌈" };
+  
+  // Eğer tam eşleşme varsa onu döndür
+  if (colorMap[numericValue] !== undefined) {
+    return colorMap[numericValue];
+  }
+  
+  // En yakın renk değerini bul
+  const colors = Object.keys(colorMap).map(Number).sort((a, b) => a - b);
+  let closestColor = colors[0];
+  let minDifference = Math.abs(numericValue - closestColor);
+  
+  for (const color of colors) {
+    const difference = Math.abs(numericValue - color);
+    if (difference < minDifference) {
+      minDifference = difference;
+      closestColor = color;
+    }
+  }
+  
+  // Eğer birden fazla aynı farkta değer varsa, sayısal olarak daha yakın olanı seç
+  if (minDifference > 0) {
+    const sameDifferenceColors = colors.filter(color => Math.abs(numericValue - color) === minDifference);
+    if (sameDifferenceColors.length > 1) {
+      // Sayısal olarak en yakın olanı bul
+      closestColor = sameDifferenceColors.reduce((closest, current) => {
+        return Math.abs(numericValue - current) < Math.abs(numericValue - closest) ? current : closest;
+      });
+    }
+  }
+  
+  return colorMap[closestColor];
 }
 
 io.on("connection", (socket) => {
@@ -651,6 +894,25 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("themeChanged", { theme });
     
     console.log(`Theme changed to ${theme} in room ${roomId} by owner ${socket.id}`);
+  });
+  
+  // Kullanıcı adı değişikliği
+  socket.on("usernameChanged", (data) => {
+    const roomId = socket.data.roomId;
+    if (!roomId || !rooms[roomId]) return;
+    
+    const { newUsername } = data;
+    if (newUsername && newUsername.trim()) {
+      // Kullanıcının adını güncelle
+      if (rooms[roomId].users[socket.id]) {
+        rooms[roomId].users[socket.id].name = newUsername.trim();
+        
+        // Tüm oyunculara güncellenmiş kullanıcı listesini gönder
+        io.to(roomId).emit("state", roomState(roomId));
+        
+        console.log(`Oda ${roomId}: Kullanıcı ${socket.id} adını "${newUsername}" olarak değiştirdi`);
+      }
+    }
   });
 
   socket.on("disconnect", () => {

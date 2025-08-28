@@ -22,6 +22,12 @@
         <div class="room-status">
           <span id="status" class="status-badge" role="status" aria-live="polite">Beklemede</span>
         </div>
+        <div class="user-info">
+          <span id="currentUsername" class="username-display">-</span>
+          <button id="changeUsernameBtn" class="username-change-btn" title="Kullanıcı adını değiştir">
+            <span class="btn-icon">✏️</span>
+          </button>
+        </div>
       </div>
       <div class="header-actions">
         <button id="themeBtn" class="action-btn secondary" style="display: none;">
@@ -421,6 +427,41 @@
             💡 Tema seçimi sadece görünümü değiştirir, işleyiş aynı kalır
           </p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Username Prompt Modal -->
+  <div id="usernameModal" class="username-modal" style="display: none;">
+    <div class="username-modal-overlay"></div>
+    <div class="username-modal-content">
+      <div class="username-modal-header">
+        <h3>👤 Kullanıcı Adını Gir</h3>
+        <p>Bu odaya katılmak için kullanıcı adınızı girmeniz gerekiyor</p>
+        <p class="room-info-text">Oda: <span id="modalRoomId" class="room-id-highlight">-</span></p>
+      </div>
+      
+      <div class="username-modal-body">
+        <form id="usernameForm" class="username-form">
+          <div class="form-group">
+            <label for="usernameInput" class="form-label">Kullanıcı Adınız</label>
+            <input 
+              type="text" 
+              id="usernameInput" 
+              class="form-input" 
+              placeholder="Örn: Ahmet Yılmaz" 
+              required 
+              autocomplete="off"
+            />
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">
+              <span class="btn-icon">🚪</span>
+              Odaya Katıl
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
