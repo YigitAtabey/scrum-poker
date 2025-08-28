@@ -370,10 +370,27 @@ function convertNumericToTshirt(numericValue) {
   if (minDifference > 0) {
     const sameDifferenceSizes = sizes.filter(size => Math.abs(numericValue - size) === minDifference);
     if (sameDifferenceSizes.length > 1) {
-      // Sayısal olarak en yakın olanı bul
-      closestSize = sameDifferenceSizes.reduce((closest, current) => {
-        return Math.abs(numericValue - current) < Math.abs(numericValue - closest) ? current : closest;
-      });
+      // Sayısal olarak en yakın olanı bul - daha akıllı mantık
+      // Eğer numericValue iki değer arasındaysa, daha büyük olanı seç
+      const sortedSizes = sameDifferenceSizes.sort((a, b) => a - b);
+      if (numericValue > sortedSizes[0] && numericValue < sortedSizes[sortedSizes.length - 1]) {
+        // numericValue iki değer arasındaysa, daha büyük olanı seç
+        closestSize = sortedSizes[sortedSizes.length - 1];
+      } else {
+        // Değilse en yakın olanı bul
+        let bestSize = sameDifferenceSizes[0];
+        let bestDifference = Math.abs(numericValue - bestSize);
+        
+        for (const size of sameDifferenceSizes) {
+          const difference = Math.abs(numericValue - size);
+          if (difference < bestDifference) {
+            bestDifference = difference;
+            bestSize = size;
+          }
+        }
+        
+        closestSize = bestSize;
+      }
     }
   }
   
@@ -406,10 +423,27 @@ function convertNumericToTime(numericValue) {
   if (minDifference > 0) {
     const sameDifferenceTimes = times.filter(time => Math.abs(numericValue - time) === minDifference);
     if (sameDifferenceTimes.length > 1) {
-      // Sayısal olarak en yakın olanı bul
-      closestTime = sameDifferenceTimes.reduce((closest, current) => {
-        return Math.abs(numericValue - current) < Math.abs(numericValue - closest) ? current : closest;
-      });
+      // Sayısal olarak en yakın olanı bul - daha akıllı mantık
+      // Eğer numericValue iki değer arasındaysa, daha büyük olanı seç
+      const sortedTimes = sameDifferenceTimes.sort((a, b) => a - b);
+      if (numericValue > sortedTimes[0] && numericValue < sortedTimes[sortedTimes.length - 1]) {
+        // numericValue iki değer arasındaysa, daha büyük olanı seç
+        closestTime = sortedTimes[sortedTimes.length - 1];
+      } else {
+        // Değilse en yakın olanı bul
+        let bestTime = sameDifferenceTimes[0];
+        let bestDifference = Math.abs(numericValue - bestTime);
+        
+        for (const time of sameDifferenceTimes) {
+          const difference = Math.abs(numericValue - time);
+          if (difference < bestDifference) {
+            bestDifference = difference;
+            bestTime = time;
+          }
+        }
+        
+        closestTime = bestTime;
+      }
     }
   }
   
@@ -442,10 +476,27 @@ function convertNumericToFruit(numericValue) {
   if (minDifference > 0) {
     const sameDifferenceFruits = fruits.filter(fruit => Math.abs(numericValue - fruit) === minDifference);
     if (sameDifferenceFruits.length > 1) {
-      // Sayısal olarak en yakın olanı bul
-      closestFruit = sameDifferenceFruits.reduce((closest, current) => {
-        return Math.abs(numericValue - current) < Math.abs(numericValue - closest) ? current : closest;
-      });
+      // Sayısal olarak en yakın olanı bul - daha akıllı mantık
+      // Eğer numericValue iki değer arasındaysa, daha büyük olanı seç
+      const sortedFruits = sameDifferenceFruits.sort((a, b) => a - b);
+      if (numericValue > sortedFruits[0] && numericValue < sortedFruits[sortedFruits.length - 1]) {
+        // numericValue iki değer arasındaysa, daha büyük olanı seç
+        closestFruit = sortedFruits[sortedFruits.length - 1];
+      } else {
+        // Değilse en yakın olanı bul
+        let bestFruit = sameDifferenceFruits[0];
+        let bestDifference = Math.abs(numericValue - bestFruit);
+        
+        for (const fruit of sameDifferenceFruits) {
+          const difference = Math.abs(numericValue - fruit);
+          if (difference < bestDifference) {
+            bestDifference = difference;
+            bestFruit = fruit;
+          }
+        }
+        
+        closestFruit = bestFruit;
+      }
     }
   }
   
@@ -478,10 +529,27 @@ function convertNumericToAnimal(numericValue) {
   if (minDifference > 0) {
     const sameDifferenceAnimals = animals.filter(animal => Math.abs(numericValue - animal) === minDifference);
     if (sameDifferenceAnimals.length > 1) {
-      // Sayısal olarak en yakın olanı bul
-      closestAnimal = sameDifferenceAnimals.reduce((closest, current) => {
-        return Math.abs(numericValue - current) < Math.abs(numericValue - closest) ? current : closest;
-      });
+      // Sayısal olarak en yakın olanı bul - daha akıllı mantık
+      // Eğer numericValue iki değer arasındaysa, daha büyük olanı seç
+      const sortedAnimals = sameDifferenceAnimals.sort((a, b) => a - b);
+      if (numericValue > sortedAnimals[0] && numericValue < sortedAnimals[sortedAnimals.length - 1]) {
+        // numericValue iki değer arasındaysa, daha büyük olanı seç
+        closestAnimal = sortedAnimals[sortedAnimals.length - 1];
+      } else {
+        // Değilse en yakın olanı bul
+        let bestAnimal = sameDifferenceAnimals[0];
+        let bestDifference = Math.abs(numericValue - bestAnimal);
+        
+        for (const animal of sameDifferenceAnimals) {
+          const difference = Math.abs(numericValue - animal);
+          if (difference < bestDifference) {
+            bestDifference = difference;
+            bestAnimal = animal;
+          }
+        }
+        
+        closestAnimal = bestAnimal;
+      }
     }
   }
   
@@ -514,10 +582,27 @@ function convertNumericToColor(numericValue) {
   if (minDifference > 0) {
     const sameDifferenceColors = colors.filter(color => Math.abs(numericValue - color) === minDifference);
     if (sameDifferenceColors.length > 1) {
-      // Sayısal olarak en yakın olanı bul
-      closestColor = sameDifferenceColors.reduce((closest, current) => {
-        return Math.abs(numericValue - current) < Math.abs(numericValue - closest) ? current : closest;
-      });
+      // Sayısal olarak en yakın olanı bul - daha akıllı mantık
+      // Eğer numericValue iki değer arasındaysa, daha büyük olanı seç
+      const sortedColors = sameDifferenceColors.sort((a, b) => a - b);
+      if (numericValue > sortedColors[0] && numericValue < sortedColors[sortedColors.length - 1]) {
+        // numericValue iki değer arasındaysa, daha büyük olanı seç
+        closestColor = sortedColors[sortedColors.length - 1];
+      } else {
+        // Değilse en yakın olanı bul
+        let bestColor = sameDifferenceColors[0];
+        let bestDifference = Math.abs(numericValue - bestColor);
+        
+        for (const color of sameDifferenceColors) {
+          const difference = Math.abs(numericValue - color);
+          if (difference < bestDifference) {
+            bestDifference = difference;
+            bestColor = color;
+          }
+        }
+        
+        closestColor = bestColor;
+      }
     }
   }
   

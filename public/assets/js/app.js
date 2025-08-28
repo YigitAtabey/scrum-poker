@@ -24,13 +24,12 @@ function setupFormSubmit() {
   joinForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    const username = document.getElementById("username")?.value?.trim();
     let room = document.getElementById("room")?.value?.trim();
     const submitButton = e.target.querySelector('button[type="submit"]');
 
-    // Kullanıcı adı boşsa hata mesajı
-    if (!username) {
-      showMsg("Kullanıcı adı boş olamaz!", "error");
+    // Oda kodu boşsa hata mesajı
+    if (!room) {
+      showMsg("Oda kodu boş olamaz!", "error");
       return;
     }
 
@@ -40,16 +39,8 @@ function setupFormSubmit() {
       submitButton.textContent = "Katılıyor...";
     }
 
-    // Eğer oda boşsa random üret
-    if (!room) {
-      room = Math.random().toString(36).substring(2, 8);
-    }
-
     // Oda kodunu case-insensitive yap (küçük harfe çevir)
     room = room.toLowerCase();
-
-    // LocalStorage'a kullanıcı adını kaydet
-    localStorage.setItem("username", username);
 
     // Son odaları listeye ekle (en fazla 5 tane)
     let rooms = JSON.parse(localStorage.getItem("recentRooms") || "[]");
