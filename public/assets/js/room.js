@@ -593,11 +593,15 @@
       displayMode = mode.map(m => convertNumericToColor(m)).join(', ');
     }
     
-    let summaryText = `📊 Özet: Ortalama ${displayAverage} | Medyan ${displayMedian} | En çok ${displayMode}`;
+    // Daha net ve anlaşılır özet metni
+    let summaryText = `📊 İSTATİSTİKLER:\n`;
+    summaryText += `• 🎯 Ortalama (Ana Sonuç): ${displayAverage}\n`;
+    summaryText += `• 📊 Medyan: ${displayMedian}\n`;
+    summaryText += `• 🔥 En Çok Verilen: ${displayMode}`;
     
     // Eğer özel kartlar da varsa, bunları da ekle
     if (specialVotes.length > 0) {
-      summaryText += ` | ${specialVotes.length} özel kart`;
+      summaryText += `\n• 🎭 Özel Kartlar: ${specialVotes.length} adet`;
     }
 
     return `${distText}\n\n${summaryText}`;
@@ -692,6 +696,11 @@
       displayAverage = convertNumericToColor(avg);
       displayMedian = convertNumericToColor(median);
       displayMode = mode.map(m => convertNumericToColor(parseFloat(m)));
+    } else {
+      // Poker kartları için sayısal değerleri 1 ondalık basamakla göster
+      displayAverage = avg.toFixed(1);
+      displayMedian = median.toFixed(1);
+      displayMode = mode.map(m => m.toString());
     }
     
     return {
@@ -1242,7 +1251,15 @@
     // İstatistikler
     if (state.revealed) {
       statsEl.classList.remove("muted");
-      statsEl.textContent = calcStats(state.votes);
+      const statsText = calcStats(state.votes);
+      
+      // İstatistikleri daha güzel formatta göster
+      statsEl.innerHTML = `
+        <div class="stats-display">
+          <div class="stats-header">📊 Oylama Sonuçları</div>
+          <div class="stats-content">${statsText.replace(/\n/g, '<br>')}</div>
+        </div>
+      `;
       
       // Reveal sonrası pop-up göster
       if (state.currentTask && state.votes && Object.keys(state.votes).length > 0) {
@@ -1256,7 +1273,11 @@
       }
     } else {
       statsEl.classList.add("muted");
-      statsEl.textContent = "Reveal'dan sonra görünecek.";
+      statsEl.innerHTML = `
+        <div class="stats-display">
+          <div class="stats-placeholder">⏳ Reveal'dan sonra görünecek.</div>
+        </div>
+      `;
     }
 
     // Görev başlığı UI'sı
@@ -1552,26 +1573,26 @@
                   <span class="stat-value">${stats.specialVotes ? stats.specialVotes.join(', ') : 'N/A'}</span>
                 </div>
               ` : `
-                <div class="stat-item">
-                  <span class="stat-label">Ortalama:</span>
-                  <span class="stat-value">${stats.displayAverage !== undefined ? stats.displayAverage : (stats.average ? stats.average.toFixed(1) : 'N/A')}</span>
+                <div class="stat-item primary-stat">
+                  <span class="stat-label">🎯 Ortalama (Ana Sonuç)</span>
+                  <span class="stat-value primary-value">${stats.displayAverage !== undefined ? stats.displayAverage : (stats.average ? stats.average.toFixed(1) : 'N/A')}</span>
                 </div>
-                <div class="stat-item">
-                  <span class="stat-label">Medyan:</span>
+                <div class="stat-item secondary-stat">
+                  <span class="stat-label">📊 Medyan</span>
                   <span class="stat-value">${stats.displayMedian !== undefined ? stats.displayMedian : (stats.median || 'N/A')}</span>
                 </div>
-                <div class="stat-item">
-                  <span class="stat-label">En Çok:</span>
+                <div class="stat-item secondary-stat">
+                  <span class="stat-label">🔥 En Çok Verilen</span>
                   <span class="stat-value">${stats.displayMode && stats.displayMode.length > 0 ? stats.displayMode.join(', ') : (stats.mode ? stats.mode.join(', ') : 'N/A')}</span>
                 </div>
               `}
-              <div class="stat-item">
-                <span class="stat-label">Toplam Oy:</span>
+              <div class="stat-item info-stat">
+                <span class="stat-label">📈 Toplam Oy</span>
                 <span class="stat-value">${stats.count || Object.keys(votes).length}</span>
               </div>
               ${!stats.hasOnlySpecialVotes && stats.specialCount > 0 ? `
-                <div class="stat-item">
-                  <span class="stat-label">Özel Kartlar:</span>
+                <div class="stat-item info-stat">
+                  <span class="stat-label">🎭 Özel Kartlar</span>
                   <span class="stat-value">${stats.specialCount} adet</span>
                 </div>
               ` : ''}
@@ -2377,10 +2398,11 @@
       taskDiv.className = 'history-task';
       taskDiv.textContent = item.task || '(Görev adı yok)';
       
-      // Skor
+      // Skor (Ortalama - Ana Sonuç)
       const scoreDiv = document.createElement('div');
       if (item.stats && item.stats.average !== null) {
-        scoreDiv.className = 'history-score';
+        scoreDiv.className = 'history-score primary-score';
+        scoreDiv.title = 'Ortalama (Ana Sonuç)';
         // Tema'ya göre skoru göster
         if (item.stats.displayAverage !== undefined) {
           scoreDiv.textContent = item.stats.displayAverage;
@@ -2424,14 +2446,14 @@
           statsDiv.appendChild(statDiv);
         }
         
-        // Medyan
-        if (item.stats.median !== null && item.stats.median !== undefined) {
+        // Ortalama
+        if (item.stats.average !== null && item.stats.average !== undefined) {
           const statDiv = document.createElement('div');
           statDiv.className = 'history-stat';
-          const medianValue = item.stats.displayMedian !== undefined ? item.stats.displayMedian : item.stats.median;
+          const averageValue = item.stats.displayAverage !== undefined ? item.stats.displayAverage : item.stats.average.toFixed(1);
           statDiv.innerHTML = `
-            <span class="history-stat-label">Medyan</span>
-            <span class="history-stat-value">${medianValue}</span>
+            <span class="history-stat-label">Ortalama</span>
+            <span class="history-stat-value">${averageValue}</span>
           `;
           statsDiv.appendChild(statDiv);
         }

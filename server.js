@@ -301,6 +301,11 @@ function calcStatsFromVotes(votes) {
     displayAverage = convertNumericToColor(average);
     displayMedian = convertNumericToColor(median);
     displayMode = mode.map(m => convertNumericToColor(m));
+  } else {
+    // Poker kartları için sayısal değerleri 1 ondalık basamakla göster
+    displayAverage = average.toFixed(1);
+    displayMedian = median.toFixed(1);
+    displayMode = mode.map(m => m.toString());
   }
   
   // Dağılımı tema'ya göre anlaşılır hale getir
@@ -328,7 +333,10 @@ function calcStatsFromVotes(votes) {
   
   const summary = `${distText}
 
-📊 Özet: Ortalama ${displayAverage} | Medyan ${displayMedian} | En çok ${displayMode.join(", ")}`;
+📊 İSTATİSTİKLER:
+• Ortalama: ${displayAverage}
+• Medyan: ${displayMedian}
+• En Çok Verilen: ${displayMode.join(", ")}`;
   
   return { 
     count: nums.length, 

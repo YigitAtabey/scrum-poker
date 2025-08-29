@@ -3174,3 +3174,120 @@ body {
 .color-card[data-value="☕"] {
   background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
 }
+
+.stats-content {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  white-space: pre-line;
+}
+
+.stats-placeholder {
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: var(--spacing-md);
+}
+
+/* Primary score in history */
+.history-score.primary-score {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  font-weight: 700;
+  border: 2px solid var(--primary-light);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+  transform: scale(1.05);
+  transition: all var(--transition-normal);
+}
+
+.history-score.primary-score:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.6);
+}
+
+/* Enhanced statistics display in room */
+.stats-display {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+}
+
+.stats-header {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-light);
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Enhanced popup statistics */
+.reveal-result-popup .stats-grid {
+  grid-template-columns: 1fr;
+  gap: var(--spacing-sm);
+}
+
+.reveal-result-popup .stat-item {
+  text-align: left;
+  padding: var(--spacing-lg);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.reveal-result-popup .stat-item:hover {
+  background: var(--bg-secondary);
+  border-color: var(--primary-color);
+}
+
+.reveal-result-popup .stat-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.reveal-result-popup .stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Primary statistic (Average) */
+.reveal-result-popup .stat-item.primary-stat {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border: 2px solid var(--primary-color);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  transform: scale(1.02);
+}
+
+.reveal-result-popup .stat-item.primary-stat .stat-label {
+  color: var(--primary-light);
+  font-weight: 600;
+}
+
+.reveal-result-popup .stat-item.primary-stat .stat-value.primary-value {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+/* Secondary statistics (Median, Mode) */
+.reveal-result-popup .stat-item.secondary-stat {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+}
+
+.reveal-result-popup .stat-item.secondary-stat .stat-label {
+  color: var(--text-secondary);
+}
+
+/* Info statistics (Total votes, Special cards) */
+.reveal-result-popup .stat-item.info-stat {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+}
