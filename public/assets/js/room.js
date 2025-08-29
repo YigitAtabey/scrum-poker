@@ -1,5 +1,406 @@
 // room.js – UI mantığı
 (function () {
+  // Uyarıların sadece bir kez gösterilmesi için flag
+  let warningsShown = false;
+  
+  // F5 ve sayfa yenileme engelleme
+  function preventPageRefresh() {
+    // F5 tuşunu ve diğer yenileme kısayollarını engelle
+    document.addEventListener('keydown', function(e) {
+      // F5, Ctrl+R, Ctrl+Shift+R, Ctrl+F5
+      if (e.key === 'F5' || 
+          (e.ctrlKey && e.key === 'r') || 
+          (e.ctrlKey && e.key === 'R') ||
+          (e.ctrlKey && e.shiftKey && e.key === 'R') ||
+          (e.ctrlKey && e.key === 'F5')) {
+        e.preventDefault();
+        showRefreshWarning();
+        return false;
+      }
+      
+      // Alt+F4 (Windows'ta pencere kapatma)
+      if (e.altKey && e.key === 'F4') {
+        e.preventDefault();
+        showRefreshWarning();
+        return false;
+      }
+      
+      // Ctrl+Shift+Delete (tarayıcı geçmişi temizleme)
+      if (e.ctrlKey && e.shiftKey && e.key === 'Delete') {
+        e.preventDefault();
+        showRefreshWarning();
+        return false;
+      }
+    });
+    
+    // Sağ tık menüsünü engelle (tüm tarayıcı menüleri)
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      return false;
+    });
+    
+    // F12 (Developer Tools) engelleme
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+        e.preventDefault();
+        showRefreshWarning();
+        return false;
+      }
+    });
+    
+    // beforeunload event'i ile sayfa kapatma/yenileme uyarısı
+    window.addEventListener('beforeunload', function(e) {
+      // Eğer aktif oyun varsa tüm kullanıcılar için uyarı göster
+      if (window.RT?.state?.currentTask && window.RT?.state?.currentTask.trim()) {
+        let message;
+        if (isRoomOwner) {
+          message = 'Sayfa yenilendiğinde yöneticiliğinizi kaybedeceksiniz! Devam etmek istiyor musunuz?';
+        } else {
+          message = 'Sayfa yenilendiğinde tüm oy durumları sıfırlanacak! Devam etmek istiyor musunuz?';
+        }
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
+      }
+    });
+    
+    // Sayfa görünürlük değişikliği (sekme değiştirme) uyarısı
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden && isRoomOwner) {
+        // Sekme değiştirildiğinde uyarı göster
+        showTabChangeWarning();
+      }
+    });
+    
+
+    
+    // Tarayıcı geri/ileri butonlarını engelle
+    window.addEventListener('popstate', function(e) {
+      // Tüm kullanıcılar için geri/ileri butonlarını engelle
+      e.preventDefault();
+      showRefreshWarning();
+      // URL'yi geri al
+      window.history.pushState(null, null, window.location.href);
+      return false;
+    });
+    
+    // Sayfa yüklendiğinde history state'i ekle
+    window.history.pushState(null, null, window.location.href);
+    
+    // Sürükle-bırak ile sayfa yenilemeyi engelle
+    document.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      return false;
+    });
+    
+    document.addEventListener('drop', function(e) {
+      e.preventDefault();
+      return false;
+    });
+    
+    // Select text engelleme (sadece oda sahibi için)
+    document.addEventListener('selectstart', function(e) {
+      if (isRoomOwner) {
+        e.preventDefault();
+        return false;
+      }
+    });
+    
+    // Mobil cihazlar için ek güvenlik
+    if ('ontouchstart' in window) {
+      // Touch olaylarını engelle (mobil yenileme için)
+      document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 2) { // 3+ parmak dokunması
+          e.preventDefault();
+          showRefreshWarning();
+          return false;
+        }
+      }, { passive: false });
+      
+      // Mobil cihazlarda zoom'u engelle
+      document.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+        return false;
+      });
+      
+      document.addEventListener('gesturechange', function(e) {
+        e.preventDefault();
+        return false;
+      });
+      
+      document.addEventListener('gestureend', function(e) {
+        e.preventDefault();
+        return false;
+      });
+    }
+  }
+  
+  // Yenileme uyarısı modal'ı - Tüm kullanıcılar için
+  function showRefreshWarning() {
+    if (isRoomOwner) {
+      // Oda sahibi için detaylı uyarı
+      Swal.fire({
+        title: '⚠️ Sayfa Yenileme Uyarısı',
+        html: `
+          <div style="text-align: left; color: var(--text-primary);">
+            <p><strong>Sayfa yenilendiğinde:</strong></p>
+            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+              <li>🔴 Yöneticiliğinizi kaybedeceksiniz</li>
+              <li>🔄 Tüm oy durumları sıfırlanacak</li>
+              <li>💬 Chat geçmişi kaybolacak</li>
+              <li>📊 İstatistikler sıfırlanacak</li>
+            </ul>
+            <p><strong>Alternatif çözümler:</strong></p>
+            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+              <li>✅ Sayfayı yenilemek yerine "Reset" butonunu kullanın</li>
+              <li>✅ Yeni görev için "Reset" yapın</li>
+              <li>✅ Odadan çıkmak için "Odadan Çık" butonunu kullanın</li>
+            </ul>
+          </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yine de Yenile',
+        cancelButtonText: 'İptal',
+        background: '#1e1b4b',
+        color: '#ffffff',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6366f1',
+        width: '500px'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Kullanıcı yine de yenilemek istiyorsa
+          Swal.fire({
+            title: 'Son Uyarı!',
+            text: 'Yöneticiliğinizi kaybedeceksiniz. Emin misiniz?',
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, Yenile',
+            cancelButtonText: 'Hayır, İptal',
+            background: '#1e1b4b',
+            color: '#ffffff',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6366f1'
+          }).then((finalResult) => {
+            if (finalResult.isConfirmed) {
+              // Son kez onaylandıysa sayfayı yenile
+              window.location.reload();
+            }
+          });
+        }
+      });
+    } else {
+      // Normal kullanıcı için basit uyarı
+      Swal.fire({
+        title: '⚠️ Sayfa Yenileme Uyarısı',
+        html: `
+          <div style="text-align: left; color: var(--text-primary);">
+            <p><strong>Sayfa yenilendiğinde:</strong></p>
+            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+              <li>🔄 Tüm oy durumları sıfırlanacak</li>
+              <li>💬 Chat geçmişi kaybolacak</li>
+              <li>📊 İstatistikler sıfırlanacak</li>
+              <li>🔄 Odaya yeniden katılmanız gerekecek</li>
+            </ul>
+            <p><strong>Alternatif çözümler:</strong></p>
+            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+              <li>✅ Yeni görev için "Reset" butonunu bekleyin</li>
+              <li>✅ Odadan çıkmak için "Odadan Çık" butonunu kullanın</li>
+            </ul>
+          </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yine de Yenile',
+        cancelButtonText: 'İptal',
+        background: '#1e1b4b',
+        color: '#ffffff',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6366f1',
+        width: '500px'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Kullanıcı yine de yenilemek istiyorsa
+          Swal.fire({
+            title: 'Son Uyarı!',
+            text: 'Tüm oy durumları sıfırlanacak. Emin misiniz?',
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, Yenile',
+            cancelButtonText: 'Hayır, İptal',
+            background: '#1e1b4b',
+            color: '#ffffff',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6366f1'
+          }).then((finalResult) => {
+            if (finalResult.isConfirmed) {
+              // Son kez onaylandıysa sayfayı yenile
+              window.location.reload();
+            }
+          });
+        }
+      });
+    }
+  }
+  
+  // Oda sahibi uyarısı modal'ı
+  function showOwnerWarning() {
+    Swal.fire({
+      title: '👑 Oda Yöneticisi Oldunuz!',
+      html: `
+        <div style="text-align: left; color: var(--text-primary);">
+          <p><strong>Yönetici yetkileriniz:</strong></p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+            <li>✅ Görev ekleme/düzenleme</li>
+            <li>✅ Oyları gösterme (Reveal)</li>
+            <li>✅ Odayı sıfırlama (Reset)</li>
+            <li>✅ Tema değiştirme</li>
+          </ul>
+          <p><strong>⚠️ Önemli uyarılar:</strong></p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+            <li>🔴 F5 tuşuna basmayın!</li>
+            <li>🔴 Sayfayı yenilemeyin!</li>
+            <li>🔴 Tarayıcıyı kapatmayın!</li>
+            <li>🔴 Sekmeyi yenilemeyin!</li>
+          </ul>
+          <p><strong>💡 Alternatif çözümler:</strong></p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+            <li>🔄 Yeni görev için "Reset" butonunu kullanın</li>
+            <li>🚪 Odadan çıkmak için "Odadan Çık" butonunu kullanın</li>
+            <li>🎨 Tema değiştirmek için "Tema" butonunu kullanın</li>
+          </ul>
+        </div>
+      `,
+      icon: 'success',
+      confirmButtonText: 'Anladım',
+      background: '#1e1b4b',
+      color: '#ffffff',
+      confirmButtonColor: '#6366f1',
+      width: '500px',
+      allowOutsideClick: false
+    });
+  }
+
+  // Normal kullanıcı karşılama mesajı
+  function showUserWelcome() {
+    Swal.fire({
+      title: '👋 Odaya Hoş Geldiniz!',
+      html: `
+        <div style="text-align: left; color: var(--text-primary);">
+          <p><strong>Kullanıcı yetkileriniz:</strong></p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+            <li>✅ Oy verme</li>
+            <li>✅ Chat yapma</li>
+            <li>✅ Hazır durumu belirtme</li>
+            <li>✅ Oda istatistiklerini görme</li>
+          </ul>
+          <p><strong>⚠️ Önemli uyarılar:</strong></p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+            <li>🔴 F5 tuşuna basmayın!</li>
+            <li>🔴 Sayfayı yenilemeyin!</li>
+            <li>🔴 Tarayıcıyı kapatmayın!</li>
+            <li>🔴 Sekmeyi yenilemeyin!</li>
+          </ul>
+          <p><strong>💡 Alternatif çözümler:</strong></p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+            <li>🔄 Yeni görev için "Reset" butonunu bekleyin</li>
+            <li>🚪 Odadan çıkmak için "Odadan Çık" butonunu kullanın</li>
+            <li>🎨 Tema değiştirmek için "Tema" butonunu bekleyin</li>
+          </ul>
+        </div>
+      `,
+      icon: 'info',
+      confirmButtonText: 'Anladım',
+      background: '#1e1b4b',
+      color: '#ffffff',
+      confirmButtonColor: '#6366f1',
+      width: '500px',
+      allowOutsideClick: false
+    });
+  }
+  
+  // Sekme değiştirme uyarısı
+  function showTabChangeWarning() {
+    // Eğer zaten bir uyarı gösteriliyorsa tekrar gösterme
+    if (document.querySelector('.swal2-container')) return;
+    
+    Swal.fire({
+      title: '⚠️ Sekme Değiştirildi',
+      text: 'Oda yöneticisisiniz! Sekme değiştirildiğinde yöneticiliğinizi kaybedebilirsiniz.',
+      icon: 'warning',
+      confirmButtonText: 'Tamam',
+      background: '#1e1b4b',
+      color: '#ffffff',
+      confirmButtonColor: '#6366f1',
+      timer: 3000,
+      timerProgressBar: true,
+      showConfirmButton: false
+    });
+  }
+  
+  // Güvenlik göstergesi ekle
+  function addSecurityIndicator() {
+    // Eğer zaten varsa ekleme
+    if (document.querySelector('.room-owner-indicator')) return;
+    
+    const indicator = document.createElement('div');
+    indicator.className = 'room-owner-indicator';
+    indicator.innerHTML = '🔒 Yönetici Modu';
+    indicator.title = 'Sayfa yenilemeyin! F5 tuşuna basmayın!';
+    
+    document.body.appendChild(indicator);
+  }
+  
+  // Güvenlik göstergesini kaldır
+  function removeSecurityIndicator() {
+    const indicator = document.querySelector('.room-owner-indicator');
+    if (indicator) {
+      indicator.remove();
+    }
+  }
+  
+  // Güvenlik hatırlatıcılarını başlat
+  function startSecurityReminders() {
+    // Her 5 dakikada bir güvenlik hatırlatısı göster
+    setInterval(() => {
+      if (isRoomOwner && !document.querySelector('.swal2-container')) {
+        showSecurityReminder();
+      }
+    }, 5 * 60 * 1000); // 5 dakika
+  }
+  
+  // Güvenlik hatırlatısı göster
+  function showSecurityReminder() {
+    Swal.fire({
+      title: '🔒 Güvenlik Hatırlatısı',
+      html: `
+        <div style="text-align: left; color: var(--text-primary);">
+          <p><strong>Oda yöneticisisiniz!</strong></p>
+          <p>Lütfen şunları yapmayın:</p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+            <li>🔴 F5 tuşuna basmayın</li>
+            <li>🔴 Sayfayı yenilemeyin</li>
+            <li>🔴 Tarayıcıyı kapatmayın</li>
+            <li>🔴 Sekmeyi yenilemeyin</li>
+          </ul>
+          <p><strong>Bunun yerine:</strong></p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+            <li>✅ "Reset" butonunu kullanın</li>
+            <li>✅ "Odadan Çık" butonunu kullanın</li>
+          </ul>
+        </div>
+      `,
+      icon: 'info',
+      confirmButtonText: 'Anladım',
+      background: '#1e1b4b',
+      color: '#ffffff',
+      confirmButtonColor: '#6366f1',
+      width: '500px',
+      timer: 10000, // 10 saniye sonra otomatik kapan
+      timerProgressBar: true
+    });
+  }
+
   // Tema sistemi
   const themes = {
     poker: {
@@ -399,10 +800,38 @@
     currentUserId = window.RT?.me?.id;
     updateOwnerControls();
     console.log("Oda sahibi durumu:", isRoomOwner ? "Evet" : "Hayır");
+    
+    // Uyarılar sadece bir kez gösterilsin
+    if (!warningsShown) {
+      // Oda sahibi olduğunda uyarı göster ve CSS sınıfı ekle
+      if (isRoomOwner) {
+        showOwnerWarning();
+        document.body.classList.add('room-owner');
+        addSecurityIndicator();
+      } else {
+        document.body.classList.remove('room-owner');
+        removeSecurityIndicator();
+        // Normal kullanıcı için karşılama mesajı göster
+        showUserWelcome();
+      }
+      // Uyarılar gösterildi olarak işaretle
+      warningsShown = true;
+    } else {
+      // Uyarılar zaten gösterildiyse sadece CSS sınıflarını güncelle
+      if (isRoomOwner) {
+        document.body.classList.add('room-owner');
+        addSecurityIndicator();
+      } else {
+        document.body.classList.remove('room-owner');
+        removeSecurityIndicator();
+      }
+    }
   });
   
   // Sayfa yüklendiğinde hazır butonunu başlat
   document.addEventListener("DOMContentLoaded", () => {
+    // Sayfa yüklendiğinde uyarı flag'ini sıfırla
+    warningsShown = false;
     updateReadyButton();
     setupThemeModal(); // Tema modal'ını başlat
   });
@@ -423,6 +852,12 @@
   
   // Sayfa yüklendiğinde oda sahibi kontrolünü yap
   updateOwnerControls();
+  
+  // F5 ve sayfa yenileme engellemeyi başlat
+  preventPageRefresh();
+  
+  // Oda sahibi için otomatik güvenlik uyarıları
+  startSecurityReminders();
   
   // Oda ID'sini URL'den al ve göster
   const urlParams = new URLSearchParams(window.location.search);

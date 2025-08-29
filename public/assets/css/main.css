@@ -3291,3 +3291,166 @@ body {
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
 }
+
+/* ===== SECURITY & ANTI-REFRESH STYLES ===== */
+
+/* Disable text selection for room owner */
+body.room-owner {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Disable text selection for specific elements */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Disable pointer events for refresh-sensitive areas */
+.no-pointer {
+  pointer-events: none;
+}
+
+/* Security warning styles */
+.security-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(90deg, var(--danger-color), var(--warning-color));
+  color: white;
+  text-align: center;
+  padding: var(--spacing-sm);
+  font-weight: 600;
+  z-index: 9999;
+  animation: securityPulse 2s ease-in-out infinite;
+}
+
+@keyframes securityPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Disable context menu for room owner */
+body.room-owner * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Disable drag and drop */
+body.room-owner * {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+/* Disable image dragging */
+body.room-owner img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
+/* Disable form autocomplete for security */
+body.room-owner input,
+body.room-owner textarea {
+  -webkit-autocomplete: none;
+  -moz-autocomplete: none;
+  -ms-autocomplete: none;
+  autocomplete: none;
+}
+
+/* Disable browser default behaviors */
+body.room-owner {
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-manipulation: none;
+  touch-action: manipulation;
+}
+
+/* Security overlay for critical areas */
+.security-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 9998;
+  pointer-events: none;
+}
+
+/* Disable browser back/forward buttons visual feedback */
+body.room-owner {
+  overflow: hidden;
+}
+
+/* Prevent zoom on mobile devices */
+body.room-owner {
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* Disable browser default shortcuts */
+body.room-owner {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Security indicator for room owner */
+.room-owner-indicator {
+  position: fixed;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: var(--danger-color);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 10000;
+  animation: securityBlink 1.5s ease-in-out infinite;
+}
+
+@keyframes securityBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+/* Disable browser default focus styles for security */
+body.room-owner *:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Custom focus styles for accessibility */
+body.room-owner *:focus-visible {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: 2px !important;
+}
+
+/* Disable browser default selection */
+body.room-owner *::selection {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+body.room-owner *::-moz-selection {
+  background: transparent !important;
+  color: inherit !important;
+}
